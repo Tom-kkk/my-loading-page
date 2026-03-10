@@ -8,7 +8,7 @@ export const navLinks = [
 ];
 
 export const hero = {
-  title: '你好，我是小明',
+  title: '你好，我是Amico',
   subtitle: '创意开发者 · 爱折腾 · 乐于分享',
 };
 

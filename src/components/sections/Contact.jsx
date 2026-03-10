@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import ClayCard from '../ui/ClayCard';
 import Button from '../ui/Button';
-import { HoverPopover } from '../ui';
+import { HoverPopover, EmailModal } from '../ui';
 import { IconEnvelope, IconGitHub, IconChat } from '../icons';
 import { contact } from '../../data/site';
 import wechatQR from '../../assets/wechat.jpg';
 
 export default function Contact() {
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+
   return (
     <section
       id="contact"
@@ -22,10 +25,10 @@ export default function Contact() {
         <p className="text-slate-600 mb-6">{contact.copy}</p>
         <div className="flex flex-wrap justify-center gap-4">
           <Button
-            href={`mailto:${contact.email}`}
             variant="primary"
             icon={IconEnvelope}
             className="!px-5 !py-2.5 !border-secondary !bg-secondary hover:!bg-orange-600 focus:!ring-secondary"
+            onClick={() => setEmailModalOpen(true)}
           >
             {contact.emailLabel}
           </Button>
@@ -61,6 +64,11 @@ export default function Contact() {
           </a>
         </div>
       </ClayCard>
+      <EmailModal
+        isOpen={emailModalOpen}
+        onClose={() => setEmailModalOpen(false)}
+        email={contact.email}
+      />
     </section>
   );
 }
