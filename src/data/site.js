@@ -48,9 +48,9 @@ export const projects = [
 
 export const contact = {
   copy: '有想法或合作意向？欢迎发邮件或到社交账号找我。',
-  email: 'hello@example.com',
+  email: 'zhx_2481632.com',
   emailLabel: '发邮件',
-  githubHref: '#',
+  githubHref: 'https://github.com/Tom-kkk',
   githubLabel: 'GitHub',
 };
 
