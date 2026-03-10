@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  /* 字体 */
+  --font-caveat: 'Caveat', cursive;
+  --font-quicksand: 'Quicksand', sans-serif;
+
+  /* 自定义颜色 */
+  --color-primary: #E11D48;
+  --color-secondary: #F97316;
+  --color-accent: #4F46E5;
+  --color-sky: #0EA5E9;
+  --color-mint: #10B981;
+  --color-bg: #FFF7ED;
+  --color-surface: #FFFBEB;
+
+  /* 黏土阴影 */
+  --shadow-clay: 4px 4px 12px rgba(0,0,0,0.08), -2px -2px 8px rgba(255,255,255,0.9);
+  --shadow-clay-inset: inset -2px -2px 8px rgba(0,0,0,0.06), inset 2px 2px 8px rgba(255,255,255,0.8);
+  --shadow-clay-hover: 6px 6px 16px rgba(0,0,0,0.1), -3px -3px 10px rgba(255,255,255,0.95);
+
+  /* 动画 */
+  --animate-soft-bounce: soft-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  @keyframes soft-bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+  }
+}
+
+@layer base {
+  body {
+    @apply font-quicksand text-slate-900 antialiased;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
