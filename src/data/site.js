@@ -23,9 +23,9 @@ export const about = {
 export const projects = [
   {
     id: "1",
-    title: "小工具合集",
-    description: "日常用的截图、配色、时间戳等小工具，全部开源可复用。",
-    href: "#",
+    title: "Vue3 AI UI",
+    description: "类似 Ant Design X 的 AI 驱动企业级组件库，含对话、思考过程、打字动画等 8 个 AI 专属组件，以及虚拟列表等高性能组件，基于 Vue 3.4+，开箱即用。",
+    href: "https://vaiui.zhxnodehub.top/",
     theme: "rose",
     icon: "book",
   },
@@ -39,9 +39,9 @@ export const projects = [
   },
   {
     id: "3",
-    title: "待办小应用",
-    description: "轻量待办 + 番茄钟，本地存储，界面清爽，适合专注工作。",
-    href: "#",
+    title: "Calendar App",
+    description: "Flutter 3 轻量日程管理示例：日/周/月视图、Hive 本地存储、本地通知与国际化日期，支持多端。目前为废案，尚未完善。",
+    href: "https://github.com/Tom-kkk/calendar_app",
     theme: "emerald",
     icon: "bolt",
   },
