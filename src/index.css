@@ -2,12 +2,15 @@
 
 @import "tailwindcss";
 
+/* 暗色模式：由 .dark 类控制（与 ThemeContext 同步） */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* 字体 */
   --font-caveat: 'Caveat', cursive;
   --font-quicksand: 'Quicksand', sans-serif;
 
-  /* 自定义颜色 */
+  /* 自定义颜色（亮色） */
   --color-primary: #E11D48;
   --color-secondary: #F97316;
   --color-accent: #4F46E5;
@@ -31,7 +34,7 @@
 
 @layer base {
   body {
-    @apply font-quicksand text-slate-900 antialiased;
+    @apply font-quicksand text-slate-900 dark:text-slate-100 antialiased;
   }
 }
 

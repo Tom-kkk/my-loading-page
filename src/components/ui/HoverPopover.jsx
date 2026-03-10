@@ -64,7 +64,7 @@ export default function HoverPopover({
       <div
         id={panelId}
         role="tooltip"
-        className={`absolute z-50 rounded-[20px] border-4 border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50 p-4 shadow-clay transition-all duration-200 ${placementClasses[placement]} ${visible ? 'pointer-events-auto opacity-100 scale-100' : 'pointer-events-none opacity-0 scale-95'}`}
+        className={`absolute z-50 rounded-[20px] border-4 border-amber-200 dark:border-slate-600 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-slate-800 dark:to-slate-700 p-4 shadow-clay dark:shadow-none dark:ring-1 dark:ring-slate-600 transition-all duration-200 ${placementClasses[placement]} ${visible ? 'pointer-events-auto opacity-100 scale-100' : 'pointer-events-none opacity-0 scale-95'}`}
         onMouseEnter={cancelHide}
         onMouseLeave={hide}
       >

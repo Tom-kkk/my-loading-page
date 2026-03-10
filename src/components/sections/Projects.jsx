@@ -10,7 +10,7 @@ export default function Projects() {
     >
       <h2
         id="projects-heading"
-        className="font-caveat text-3xl sm:text-4xl font-bold text-slate-900 mb-8"
+        className="font-caveat text-3xl sm:text-4xl font-bold text-slate-900 dark:text-slate-100 mb-8"
       >
         个人项目
       </h2>

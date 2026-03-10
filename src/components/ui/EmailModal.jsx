@@ -52,25 +52,25 @@ export default function EmailModal({ isOpen, onClose, email }) {
       aria-modal="true"
       aria-labelledby="email-modal-title"
       aria-describedby="email-modal-desc"
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 transition-opacity duration-200"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-black/60 transition-opacity duration-200"
       onClick={handleOverlayClick}
     >
       <div
         ref={panelRef}
-        className="relative w-full max-w-md rounded-[20px] border-4 border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50 p-6 shadow-clay transition-all duration-200"
+        className="relative w-full max-w-md rounded-[20px] border-4 border-amber-200 dark:border-slate-600 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-slate-800 dark:to-slate-700 p-6 shadow-clay dark:shadow-none dark:ring-1 dark:ring-slate-600 transition-all duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <h3
           id="email-modal-title"
-          className="font-caveat text-2xl sm:text-3xl font-bold text-slate-900 mb-2"
+          className="font-caveat text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2"
         >
           我的邮箱
         </h3>
-        <p id="email-modal-desc" className="text-slate-600 text-sm mb-4">
+        <p id="email-modal-desc" className="text-slate-600 dark:text-slate-400 text-sm mb-4">
           复制下方地址或点击「打开邮箱」直接发信
         </p>
-        <div className="rounded-xl border-2 border-amber-200/80 bg-white/90 px-4 py-3 mb-5">
-          <span className="font-mono text-slate-800 text-base select-all break-all">
+        <div className="rounded-xl border-2 border-amber-200/80 dark:border-slate-600 bg-white/90 dark:bg-slate-700/90 px-4 py-3 mb-5">
+          <span className="font-mono text-slate-800 dark:text-slate-200 text-base select-all break-all">
             {email}
           </span>
         </div>
@@ -78,14 +78,14 @@ export default function EmailModal({ isOpen, onClose, email }) {
           <button
             type="button"
             onClick={handleCopy}
-            className="inline-flex items-center gap-2 rounded-2xl border-[3px] border-slate-300 bg-white text-slate-700 px-4 py-2.5 font-medium cursor-pointer transition-all duration-200 hover:shadow-clay-hover hover:border-amber-400 hover:text-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2"
+            className="inline-flex items-center gap-2 rounded-2xl border-[3px] border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 px-4 py-2.5 font-medium cursor-pointer transition-all duration-200 hover:shadow-clay-hover dark:hover:shadow-none hover:border-amber-400 dark:hover:border-amber-500 hover:text-amber-700 dark:hover:text-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 dark:focus:ring-offset-slate-800"
           >
             <IconClipboardCopy className="w-5 h-5 shrink-0" />
             {copied ? '已复制' : '复制'}
           </button>
           <a
             href={`mailto:${email}`}
-            className="inline-flex items-center gap-2 rounded-2xl border-[3px] border-secondary bg-secondary text-white px-4 py-2.5 font-medium cursor-pointer transition-all duration-200 hover:shadow-clay-hover hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2"
+            className="inline-flex items-center gap-2 rounded-2xl border-[3px] border-secondary dark:border-amber-600 bg-secondary dark:bg-amber-600 text-white px-4 py-2.5 font-medium cursor-pointer transition-all duration-200 hover:shadow-clay-hover dark:hover:shadow-none hover:bg-orange-600 dark:hover:bg-amber-500 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 dark:focus:ring-offset-slate-800"
           >
             <IconEnvelope className="w-5 h-5 shrink-0" />
             打开邮箱
@@ -94,7 +94,7 @@ export default function EmailModal({ isOpen, onClose, email }) {
             ref={closeBtnRef}
             type="button"
             onClick={onClose}
-            className="inline-flex items-center justify-center rounded-2xl border-[3px] border-slate-300 bg-white text-slate-600 p-2.5 cursor-pointer transition-all duration-200 hover:shadow-clay-hover hover:border-slate-400 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
+            className="inline-flex items-center justify-center rounded-2xl border-[3px] border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 p-2.5 cursor-pointer transition-all duration-200 hover:shadow-clay-hover dark:hover:shadow-none hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-800 dark:hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 dark:focus:ring-offset-slate-800"
             aria-label="关闭弹窗"
           >
             <IconX className="w-5 h-5" />
