@@ -31,9 +31,9 @@ export const projects = [
   },
   {
     id: "2",
-    title: "个人博客",
-    description: "用 Next.js 搭的博客，记录学习笔记与项目复盘，支持暗色模式。",
-    href: "#",
+    title: "个人展示页项目",
+    description: "React + Vite 搭建的个人加载/展示页，黏土风格 UI，部署于 Vercel。",
+    href: "https://github.com/Tom-kkk/my-loading-page",
     theme: "violet",
     icon: "image",
   },
