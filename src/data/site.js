@@ -39,9 +39,9 @@ export const projects = [
   },
   {
     id: "3",
-    title: "Calendar App",
-    description: "Flutter 3 轻量日程管理示例：日/周/月视图、Hive 本地存储、本地通知与国际化日期，支持多端。目前为废案，尚未完善。",
-    href: "https://github.com/Tom-kkk/calendar_app",
+    title: "QRCode Gen",
+    description: "基于 Next.js 构建的动态二维码生成与管理平台，支持用户注册登录、创建可随时修改目标链接的动态二维码、扫码跳转追踪及数据统计，后端由 Supabase 驱动。",
+    href: "https://github.com/Tom-kkk/qrcode-gen",
     theme: "emerald",
     icon: "bolt",
   },
