@@ -1,35 +1,43 @@
-/**
- * 主按钮 / 次按钮，黏土风格边框与 hover
- * variant: 'primary' | 'secondary'
- */
-export default function Button({ href, variant = 'primary', children, className = '', icon: Icon, ...props }) {
-  const base =
-    'inline-flex items-center gap-2 rounded-2xl border-[3px] px-6 py-3 font-medium cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
-  const variants = {
-    primary:
-      'border-primary bg-primary text-white hover:shadow-clay-hover hover:bg-rose-600 dark:hover:bg-rose-700 focus:ring-primary dark:border-rose-500 dark:bg-rose-600',
-    secondary:
-      'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:shadow-clay-hover dark:hover:shadow-none hover:border-secondary dark:hover:border-amber-500 hover:text-secondary dark:hover:text-amber-300 focus:ring-secondary dark:focus:ring-offset-slate-800',
-  };
-  const classes = `${base} ${variants[variant]} ${className}`.trim();
+import * as React from 'react'
+import { Slot } from '@radix-ui/react-slot'
+import { cva } from 'class-variance-authority'
+import { cn } from '@/lib/utils'
 
-  const content = (
-    <>
-      {Icon && <Icon className="w-5 h-5 shrink-0" />}
-      {children}
-    </>
-  );
+const buttonVariants = cva(
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+  {
+    variants: {
+      variant: {
+        default: 'bg-primary text-primary-foreground hover:bg-white/90',
+        ghost: 'hover:bg-white/10',
+        link: 'text-white underline-offset-4 hover:underline',
+      },
+      size: {
+        default: 'h-10 px-4 py-2',
+        sm: 'h-9 px-3',
+        lg: 'h-11 px-8',
+        icon: 'h-10 w-10',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default',
+    },
+  },
+)
 
-  if (href) {
+const Button = React.forwardRef(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : 'button'
     return (
-      <a href={href} className={classes} {...props}>
-        {content}
-      </a>
-    );
-  }
-  return (
-    <button type="button" className={classes} {...props}>
-      {content}
-    </button>
-  );
-}
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  },
+)
+Button.displayName = 'Button'
+
+export { Button, buttonVariants }

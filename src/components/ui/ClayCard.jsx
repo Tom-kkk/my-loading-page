@@ -16,19 +16,20 @@ const themeClasses = {
 
 export default function ClayCard({
   theme = 'amber',
-  as: Tag = 'div',
+  as = 'div',
   hover = true,
   className = '',
   children,
   ...props
 }) {
   const themeClass = themeClasses[theme] ?? themeClasses.amber;
+  const Root = as;
   return (
-    <Tag
+    <Root
       className={`rounded-[20px] border-4 ${themeClass} p-6 shadow-clay dark:shadow-none dark:ring-1 dark:ring-slate-600/50 transition-shadow duration-200 ${hover ? 'hover:shadow-clay-hover dark:hover:ring-slate-500 cursor-default' : ''} ${className}`.trim()}
       {...props}
     >
       {children}
-    </Tag>
+    </Root>
   );
 }

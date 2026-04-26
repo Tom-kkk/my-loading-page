@@ -34,7 +34,9 @@ export function ThemeProvider({ children }) {
     }
     try {
       localStorage.setItem(STORAGE_KEY, theme);
-    } catch (_) {}
+    } catch {
+      /* ignore quota / private mode */
+    }
   }, [theme, mounted]);
 
   const setTheme = (value) => {

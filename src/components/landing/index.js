@@ -1,0 +1,8 @@
+export { default as Navbar } from './Navbar'
+export { default as Hero } from './Hero'
+export { default as StartSection } from './StartSection'
+export { default as FeaturesChess } from './FeaturesChess'
+export { default as FeaturesGrid } from './FeaturesGrid'
+export { default as ProjectsLuxury } from './ProjectsLuxury'
+export { default as Stats } from './Stats'
+export { default as CtaFooter } from './CtaFooter'
