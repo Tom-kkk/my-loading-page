@@ -9,6 +9,11 @@ export default function HlsVideo({ src, desaturate = false, className = '', vide
     const video = videoRef.current
     if (!video || !src) return undefined
 
+    const tryPlay = () => {
+      const p = video.play()
+      if (p && typeof p.then === 'function') p.catch(() => {})
+    }
+
     let hls
     if (Hls.isSupported()) {
       hls = new Hls({
@@ -17,12 +22,15 @@ export default function HlsVideo({ src, desaturate = false, className = '', vide
       })
       hls.loadSource(src)
       hls.attachMedia(video)
+      hls.on(Hls.Events.MANIFEST_PARSED, tryPlay)
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = src
+      video.addEventListener('loadedmetadata', tryPlay, { once: true })
     }
 
     return () => {
       if (hls) hls.destroy()
+      video.removeEventListener('loadedmetadata', tryPlay)
     }
   }, [src])
 
@@ -37,6 +45,7 @@ export default function HlsVideo({ src, desaturate = false, className = '', vide
       muted
       loop
       playsInline
+      preload="auto"
       aria-hidden
     />
   )

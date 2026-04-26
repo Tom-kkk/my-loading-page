@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { motion } from 'motion/react'
 import { ArrowUpRight, Play } from 'lucide-react'
 
@@ -12,6 +13,19 @@ const HERO_MP4 =
 export default function Hero() {
   const { locale, site } = useLocale()
   const { hero, heroExtra, techTags } = site
+  const videoRef = useRef(null)
+
+  useEffect(() => {
+    const v = videoRef.current
+    if (!v) return undefined
+    const tryPlay = () => {
+      const p = v.play()
+      if (p && typeof p.then === 'function') p.catch(() => {})
+    }
+    tryPlay()
+    v.addEventListener('canplay', tryPlay, { once: true })
+    return () => v.removeEventListener('canplay', tryPlay)
+  }, [])
 
   return (
     <section
@@ -21,12 +35,14 @@ export default function Hero() {
       aria-labelledby="hero-heading"
     >
       <video
-        className="absolute left-0 w-full h-auto object-contain z-0 pointer-events-none"
+        ref={videoRef}
+        className="absolute left-0 w-full min-h-[min(50vw,28rem)] h-auto object-contain z-0 pointer-events-none"
         style={{ top: '20%' }}
         autoPlay
         muted
         loop
         playsInline
+        preload="auto"
         poster="/images/hero_bg.jpeg"
         aria-hidden
       >
