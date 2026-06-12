@@ -104,7 +104,7 @@ export default {
   },
   contact: {
     copy: 'Ideas or collaboration? Email me or reach out on social.',
-    email: 'zhx_2481632.com',
+    email: '321455764@qq.com',
     emailLabel: 'Email',
     githubHref: 'https://github.com/Tom-kkk',
     githubLabel: 'GitHub',

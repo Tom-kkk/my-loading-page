@@ -104,7 +104,7 @@ export default {
   },
   contact: {
     copy: '有想法或合作意向？欢迎发邮件或到社交账号找我。',
-    email: 'zhx_2481632.com',
+    email: '321455764@qq.com',
     emailLabel: '发邮件',
     githubHref: 'https://github.com/Tom-kkk',
     githubLabel: 'GitHub',

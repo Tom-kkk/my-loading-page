@@ -36,6 +36,9 @@ export function LocaleProvider({ children }) {
   useEffect(() => {
     if (!ready) return
     document.documentElement.lang = locale === 'zh' ? 'zh-CN' : 'en'
+    document.title = locale === 'zh'
+      ? 'Amico - AI 应用开发者 | 个人主页'
+      : 'Amico - AI Application Developer | Portfolio'
     try {
       localStorage.setItem(STORAGE_KEY, locale)
     } catch {

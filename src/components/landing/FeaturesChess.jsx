@@ -1,9 +1,30 @@
 import { ArrowUpRight } from 'lucide-react'
 import { useSiteContent } from '@/contexts/LocaleContext'
-import feature1 from '@/assets/feature-1.gif'
-import feature2 from '@/assets/feature-2.gif'
+import feature1Webm from '@/assets/feature-1.webm'
+import feature1Mp4 from '@/assets/feature-1.mp4'
+import feature2Webm from '@/assets/feature-2.webm'
+import feature2Mp4 from '@/assets/feature-2.mp4'
 
-function Row({ reverse, title, body, cta, href, media }) {
+function VideoCard({ webm, mp4, title }) {
+  return (
+    <div className="liquid-glass rounded-2xl overflow-hidden">
+      <video
+        className="w-full h-auto object-cover block"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        aria-label={title}
+      >
+        <source src={webm} type="video/webm" />
+        <source src={mp4} type="video/mp4" />
+      </video>
+    </div>
+  )
+}
+
+function Row({ reverse, title, body, cta, href, webm, mp4, videoTitle }) {
   return (
     <div
       className={`flex flex-col gap-10 lg:gap-16 lg:items-center ${
@@ -26,9 +47,7 @@ function Row({ reverse, title, body, cta, href, media }) {
         </a>
       </div>
       <div className="flex-1 w-full">
-        <div className="liquid-glass rounded-2xl overflow-hidden">
-          <img src={media} alt="" className="w-full h-auto object-cover block" loading="lazy" />
-        </div>
+        <VideoCard webm={webm} mp4={mp4} title={videoTitle} />
       </div>
     </div>
   )
@@ -55,7 +74,9 @@ export default function FeaturesChess() {
             body={row1.body}
             cta={row1.cta}
             href={row1.href}
-            media={feature1}
+            webm={feature1Webm}
+            mp4={feature1Mp4}
+            videoTitle={row1.title}
           />
           <Row
             reverse
@@ -63,7 +84,9 @@ export default function FeaturesChess() {
             body={row2.body}
             cta={row2.cta}
             href={row2.href}
-            media={feature2}
+            webm={feature2Webm}
+            mp4={feature2Mp4}
+            videoTitle={row2.title}
           />
         </div>
       </div>

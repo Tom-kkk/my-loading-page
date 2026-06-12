@@ -43,7 +43,6 @@ export default function Hero() {
         loop
         playsInline
         preload="auto"
-        poster="/images/hero_bg.jpeg"
         aria-hidden
       >
         <source src={HERO_MP4} type="video/mp4" />
