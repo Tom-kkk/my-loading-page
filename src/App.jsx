@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Folio from "./components/Folio.jsx";
 import ShelfCanvas from "./components/ShelfCanvas.jsx";
 import ShelfCursor from "./components/ShelfCursor.jsx";
-import { locales, readLocale, storeLocale } from "./data/content.js";
+import { isMobileBrowser, locales, readLocale, storeLocale } from "./data/content.js";
 
 function detectWeChat() {
   if (typeof navigator === "undefined") return { isWeChat: false, isIOS: false };
@@ -81,6 +81,7 @@ export default function App() {
 }
 
 function ShelfApp() {
+  const [isMobile] = useState(isMobileBrowser);
   const [locale, setLocale] = useState(readLocale);
   const [bookId, setBookId] = useState(null);
   const [lampOn, setLampOn] = useState(true);
@@ -91,12 +92,22 @@ function ShelfApp() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [canFullscreen, setCanFullscreen] = useState(false);
   const [hover, setHover] = useState(null);
+  const [progress, setProgress] = useState(0.05);
+  const [tipIndex, setTipIndex] = useState(0);
   const [ready, setReady] = useState(false);
   const [shelf, setShelf] = useState(null);
   const celebratedRef = useRef(false);
   const copy = locales[locale];
   const bookIndex = copy.books.findIndex((item) => item.id === bookId);
   const book = bookIndex >= 0 ? copy.books[bookIndex] : null;
+
+  useEffect(() => {
+    if (ready) return undefined;
+    const timer = window.setInterval(() => {
+      setTipIndex((prev) => (prev + 1) % copy.ui.loadingTips.length);
+    }, 2400);
+    return () => window.clearInterval(timer);
+  }, [ready, copy.ui.loadingTips.length]);
 
   useEffect(() => {
     document.body.classList.toggle("open", Boolean(book));
@@ -186,6 +197,7 @@ function ShelfApp() {
         onOpen={(item) => { setHover(null); setBookId(item.id); }}
         onLampToggle={(on) => setLampOn(on)}
         onHoverChange={(info) => setHover(info)}
+        onProgress={(ratio) => setProgress(ratio)}
         onReady={(api) => { setShelf(api); setReady(true); }}
       />
       <header>
@@ -246,7 +258,7 @@ function ShelfApp() {
         onSelectBook={(id) => setBookId(id)}
         onClose={() => setBookId(null)}
       />
-      {!dismissRotate && (
+      {isMobile && !dismissRotate && (
         <div id="rotate-tip" role="dialog" aria-modal="true" aria-label={copy.ui.rotateTitle}>
           <div className="rotate-card">
             <svg className="rotate-icon" width="56" height="56" viewBox="0 0 64 64" fill="none" aria-hidden="true">
@@ -268,7 +280,13 @@ function ShelfApp() {
         <div className="loading-card">
           <div className="eyebrow">AMICO · A SHELF</div>
           <h2>{copy.ui.loading}</h2>
-          <div className="bar"><i /></div>
+          <div className="bar">
+            <i style={{ width: `${Math.max(8, Math.round(progress * 100))}%` }} />
+          </div>
+          <div className="loading-pct">{Math.round(progress * 100)}%</div>
+          <p className="loading-tip" key={tipIndex}>
+            {copy.ui.loadingTips[tipIndex]}
+          </p>
         </div>
       </div>
       <ShelfCursor hover={hover} copy={copy} lampOn={lampOn} folioOpen={Boolean(book)} />

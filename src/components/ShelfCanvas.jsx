@@ -1,18 +1,20 @@
 import { useEffect, useRef } from "react";
 import { mountShelf } from "../scene/mountShelf.js";
 
-export default function ShelfCanvas({ books, onOpen, onLampToggle, onHoverChange, onReady }) {
+export default function ShelfCanvas({ books, onOpen, onLampToggle, onHoverChange, onProgress, onReady }) {
   const canvasRef = useRef(null);
   const booksRef = useRef(books);
   const apiRef = useRef(null);
   const onOpenRef = useRef(onOpen);
   const onLampToggleRef = useRef(onLampToggle);
   const onHoverChangeRef = useRef(onHoverChange);
+  const onProgressRef = useRef(onProgress);
   const onReadyRef = useRef(onReady);
   booksRef.current = books;
   onOpenRef.current = onOpen;
   onLampToggleRef.current = onLampToggle;
   onHoverChangeRef.current = onHoverChange;
+  onProgressRef.current = onProgress;
   onReadyRef.current = onReady;
 
   useEffect(() => {
@@ -27,6 +29,7 @@ export default function ShelfCanvas({ books, onOpen, onLampToggle, onHoverChange
       onOpen: (book) => onOpenRef.current(book),
       onLampToggle: (on) => onLampToggleRef.current?.(on),
       onHoverChange: (info) => onHoverChangeRef.current?.(info),
+      onProgress: (ratio) => onProgressRef.current?.(ratio),
     }).then((next) => {
       if (cancelled) {
         next.dispose();

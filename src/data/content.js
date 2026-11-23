@@ -65,6 +65,12 @@ export const locales = {
       wxStep2Android: "Choose \"Open in Browser\"",
       wxCopyLink: "Copy link",
       wxCopied: "Link copied",
+      loadingTips: [
+        "Tip: Click the desk lamp on the top shelf to switch between warm light and moonlight.",
+        "Tip: Tap the little black cat or rocket for a hidden 3D surprise.",
+        "Tip: Click the moon for a shooting star, or the rose for falling petals.",
+        "Tip: Explore all four volumes to unlock a night-sky meteor shower.",
+      ],
     },
     about: {
       lead: "I am Amico, a developer focused on applied AI. I use large language models to build products, and I have shipped work in retrieval-augmented generation, prompt design, and AI agents. I like the overlap of AI and Web3, and I care about turning complicated capability into a smooth experience.",
@@ -160,6 +166,12 @@ export const locales = {
       wxStep2Android: "选择「在浏览器中打开」",
       wxCopyLink: "复制网页链接",
       wxCopied: "已复制链接",
+      loadingTips: [
+        "小贴士：点击上层台灯，可以在暖灯书房与静谧月色之间切换。",
+        "小贴士：点一下小黑猫或小火箭，会有意想不到的 3D 互动彩蛋。",
+        "小贴士：点月亮可召唤彗星流星，点玫瑰会飘落 3D 玫瑰花瓣雨。",
+        "小贴士：翻阅完架上全部四卷，夜空会为你放一场庆祝流星雨。",
+      ],
     },
     about: {
       lead: "我是 Amico，一名深耕 AI 应用层的开发者。我擅长利用大语言模型（LLM）构建智能化产品，在 RAG（检索增强生成）设计、Prompt Engineering 以及 AI Agent 开发方面有实战经验。我热衷于探索 AI 与 Web3 的交叉领域，致力于将复杂的 AI 能力转化为流畅的用户体验。",
@@ -206,12 +218,22 @@ export const locales = {
 
 const STORAGE_KEY = "amico-shelf-lang";
 
+export function isMobileBrowser() {
+  if (typeof navigator === "undefined") return false;
+  return /Android|iPhone|iPad|iPod|Mobile|HarmonyOS|OpenHarmony/i.test(navigator.userAgent || "");
+}
+
 export function readLocale() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === "zh" || saved === "en") return saved;
   } catch {
-    /* 浏览器禁止读取本地存储时，使用默认英语。 */
+    /* 浏览器禁止读取本地存储时，按设备规则判断。 */
+  }
+  // 电脑浏览器默认英文；手机浏览器根据系统/浏览器语言自动匹配中文或英文
+  if (isMobileBrowser()) {
+    const lang = navigator.language || navigator.languages?.[0] || "";
+    return /^zh/i.test(lang) ? "zh" : "en";
   }
   return "en";
 }

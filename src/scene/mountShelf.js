@@ -33,7 +33,7 @@ function glide(data, target, dt) {
   data.hover += data.hoverV * dt;
 }
 
-export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, books }) {
+export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, onProgress, books }) {
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: true,
@@ -453,9 +453,21 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
     return group;
   });
 
-  // 阶段 1：优先下载轻量贴图并无感热替换；阶段 2：再并发拉取 3D 摆件，避免抢占首屏带宽
-  Promise.all([
+  // 并行加载 4 张轻贴图与 6 个已压缩至 ~1MB 的高精度摆件，实时汇报加载进度
+  // 全部加载完毕后再进入主画面（同时设置 7 秒兜底上限，避免极端弱网无限等待）
+  const totalItems = 4 + toyLayout.length;
+  let loadedItems = 0;
+  const tickProgress = () => {
+    loadedItems += 1;
+    onProgress?.(Math.min(1, loadedItems / totalItems));
+  };
+  onProgress?.(0.06);
+
+  await MeshoptDecoder.ready;
+
+  const texturePromises = [
     loadMap(`${ASSET}/textures/wood-planks.66ff16da40318ed3.webp`, { repeat: [3.2, 1] }).then((tex) => {
+      tickProgress();
       if (!alive || !tex) return;
       woodMat.map = tex;
       woodMat.color.setHex(0xf2d2a6);
@@ -465,11 +477,13 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
       trimMat.needsUpdate = true;
     }),
     loadMap(`${ASSET}/textures/wood-planks-normal.254001ca88b9a14b.webp`, { color: false, repeat: [3.2, 1] }).then((tex) => {
+      tickProgress();
       if (!alive || !tex) return;
       woodMat.normalMap = tex;
       woodMat.needsUpdate = true;
     }),
     loadMap(`${ASSET}/textures/cloth-neutral.bd2714a238f7ee4b.jpg`, { repeat: [3, 4] }).then((tex) => {
+      tickProgress();
       if (!alive || !tex) return;
       for (const b of shelfBooks) {
         b.userData.board.map = tex;
@@ -477,6 +491,7 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
       }
     }),
     loadMap(`${ASSET}/textures/paper-normal.556c3bfed32a1880.webp`, { color: false }).then((tex) => {
+      tickProgress();
       if (!alive || !tex) return;
       for (const b of shelfBooks) {
         b.userData.cover.normalMap = tex;
@@ -485,17 +500,23 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
         b.userData.innerPage.needsUpdate = true;
       }
     }),
-  ]).finally(() => {
-    if (!alive) return;
-    toyLayout.forEach(([file, x, height], index) => {
-      const kind = ornamentKind(file);
-      loadModel(file).then((model) => {
-        if (!alive) return;
-        if (model) placeToy(model, x, height, index, true, kind);
-        else placeToy(feltOrnament(kind), x, height, index, false, kind);
-      });
+  ];
+
+  const modelPromises = toyLayout.map(([file, x, height], index) => {
+    const kind = ornamentKind(file);
+    return loadModel(file).then((model) => {
+      tickProgress();
+      if (!alive) return;
+      if (model) placeToy(model, x, height, index, true, kind);
+      else placeToy(feltOrnament(kind), x, height, index, false, kind);
     });
   });
+
+  await Promise.race([
+    Promise.allSettled([...texturePromises, ...modelPromises]),
+    new Promise((resolve) => window.setTimeout(resolve, 7000)),
+  ]);
+  onProgress?.(1);
   let activeBookId = null;
   const repaintCovers = () => {
     if (!alive) return;
