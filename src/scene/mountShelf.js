@@ -132,7 +132,18 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
       resolve(tex);
     }, undefined, () => resolve(null));
   });
-  const loadModel = (file) => modelLoader.loadAsync(`${ASSET}/models/toys/${file}`).then((gltf) => gltf.scene).catch(() => null);
+  const loadModel = async (file) => {
+    const url = `${ASSET}/models/toys/${file}`;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const gltf = await modelLoader.loadAsync(url);
+        return gltf.scene;
+      } catch {
+        if (attempt === 0) await new Promise((r) => setTimeout(r, 600));
+      }
+    }
+    return null;
+  };
   const toyLayout = [
     ["lamp.d0317b4ebce8705c.glb", -1.85, 0.56],
     ["owl.64076cdcda2a772a.glb", -0.95, 0.48],
@@ -332,6 +343,8 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
     object.userData.baseZ = object.position.z;
     object.userData.baseRotY = object.rotation.y;
     object.userData.baseScale = object.scale.clone();
+    object.userData.spawn = 0.01;
+    object.scale.multiplyScalar(0.01);
     object.userData.hover = 0;
     object.userData.hoverV = 0;
     object.userData.flight = null;
@@ -352,11 +365,10 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
   toyLoads.forEach((pending, index) => {
     const [file, x, height] = toyLayout[index];
     const kind = ornamentKind(file);
-    const standIn = placeToy(feltOrnament(kind), x, height, index, false, kind);
     pending.then((model) => {
-      if (!alive || !model) return;
-      if (standIn) retire(standIn);
-      placeToy(model, x, height, index, true, kind);
+      if (!alive) return;
+      if (model) placeToy(model, x, height, index, true, kind);
+      else placeToy(feltOrnament(kind), x, height, index, false, kind);
     });
   });
 
@@ -914,6 +926,10 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
       }
 
       glide(item.userData, item === hovered ? 1 : 0, dt);
+      if (item.userData.spawn < 1) {
+        item.userData.spawn = Math.min(1, item.userData.spawn + dt * 3.4);
+      }
+      const spawnEase = 1 - Math.pow(1 - item.userData.spawn, 3);
       const lift = item.userData.hover;
       const idle = 1 - Math.min(1, Math.abs(lift));
       item.position.x = item.userData.baseX;
@@ -922,8 +938,8 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
       item.rotation.x = 0;
       item.rotation.y = item.userData.baseRotY + lift * 0.08;
       item.rotation.z = lift * -0.045;
-      item.scale.copy(item.userData.baseScale).multiplyScalar(1 + lift * 0.06);
-      if (item.userData.shadow) item.userData.shadow.material.opacity = 0.36 * (1 - lift * 0.75);
+      item.scale.copy(item.userData.baseScale).multiplyScalar(spawnEase * (1 + lift * 0.06));
+      if (item.userData.shadow) item.userData.shadow.material.opacity = 0.36 * spawnEase * (1 - lift * 0.75);
     }
     rocketLight.intensity += (rocketFlameIntensity - rocketLight.intensity) * (1 - Math.exp(-16 * dt));
     roseLight.intensity += (roseGlowIntensity - roseLight.intensity) * (1 - Math.exp(-8 * dt));

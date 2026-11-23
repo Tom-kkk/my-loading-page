@@ -47,17 +47,19 @@ header h1 {
 header p { margin: 6px 0 0; font-size: 14px; letter-spacing: 0.08em; color: #ffe7bf; }
 .head-side { text-align: right; }
 .head-actions { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
-.lang, .lamp-btn, .sound-btn {
+.lang, .lamp-btn, .sound-btn, .fs-btn {
   pointer-events: auto; cursor: pointer;
-  display: inline-flex; align-items: center; gap: 7px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
   padding: 6px 14px; border: 0; border-radius: 999px;
   background: rgba(8, 12, 28, 0.45); color: #fff6df;
   font: inherit; font-weight: 700; letter-spacing: 0.08em; font-size: 13px;
   box-shadow: 0 0 0 1px rgba(230, 189, 102, 0.8);
   transition: background 200ms ease, box-shadow 200ms ease, transform 180ms var(--spring);
 }
-.lang:hover, .lamp-btn:hover, .sound-btn:hover { background: rgba(230, 189, 102, 0.2); transform: translateY(-1px); }
-.lang:focus-visible, .lamp-btn:focus-visible, .sound-btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.fs-btn { padding: 7px 10px; }
+.fs-btn.on { color: #ffd57a; }
+.lang:hover, .lamp-btn:hover, .sound-btn:hover, .fs-btn:hover { background: rgba(230, 189, 102, 0.2); transform: translateY(-1px); }
+.lang:focus-visible, .lamp-btn:focus-visible, .sound-btn:focus-visible, .fs-btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 .sound-bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 11px; }
 .sound-bars i {
   display: block; width: 2px; border-radius: 2px;

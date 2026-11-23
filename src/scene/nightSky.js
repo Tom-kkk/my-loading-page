@@ -206,7 +206,7 @@ export class NightSky {
       fog: false,
     });
     this.moonHalo = new THREE.Mesh(new THREE.PlaneGeometry(2.35, 2.35), this.haloMat);
-    this.moonHalo.position.set(2.82, 2.56, -2.33);
+    this.moonHalo.position.set(3.72, 2.68, -2.33);
     this.group.add(this.moonHalo);
 
     const moonTex = moonTexture();
@@ -217,8 +217,8 @@ export class NightSky {
       depthWrite: false,
       fog: false,
     });
-    this.moon = new THREE.Mesh(new THREE.PlaneGeometry(0.54, 0.54), this.moonMat);
-    this.moon.position.set(2.82, 2.56, -2.31);
+    this.moon = new THREE.Mesh(new THREE.PlaneGeometry(0.52, 0.52), this.moonMat);
+    this.moon.position.set(3.72, 2.68, -2.31);
     this.group.add(this.moon);
 
     // 4. 3 层景深、独立相位异步闪烁星海

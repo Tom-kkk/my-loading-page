@@ -12,6 +12,8 @@ export default function App() {
   const [readIds, setReadIds] = useState([]);
   const [celebrationToast, setCelebrationToast] = useState(false);
   const [dismissRotate, setDismissRotate] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [canFullscreen, setCanFullscreen] = useState(false);
   const [hover, setHover] = useState(null);
   const [ready, setReady] = useState(false);
   const [shelf, setShelf] = useState(null);
@@ -75,6 +77,26 @@ export default function App() {
     setLocale(next);
   };
 
+  useEffect(() => {
+    setCanFullscreen(Boolean(document.fullscreenEnabled || document.webkitFullscreenEnabled));
+    const onFs = () => setIsFullscreen(Boolean(document.fullscreenElement || document.webkitFullscreenElement));
+    document.addEventListener("fullscreenchange", onFs);
+    document.addEventListener("webkitfullscreenchange", onFs);
+    return () => {
+      document.removeEventListener("fullscreenchange", onFs);
+      document.removeEventListener("webkitfullscreenchange", onFs);
+    };
+  }, []);
+
+  const toggleFullscreen = () => {
+    const el = document.documentElement;
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+      (document.exitFullscreen || document.webkitExitFullscreen)?.call(document)?.catch?.(() => {});
+    } else {
+      (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el)?.catch?.(() => {});
+    }
+  };
+
   const toggleSound = () => {
     const next = !soundOn;
     setSoundOn(next);
@@ -107,6 +129,26 @@ export default function App() {
               <span className="sound-bars" aria-hidden="true"><i /><i /><i /></span>
               <span className="btn-label">{soundOn ? copy.ui.soundOn : copy.ui.soundOff}</span>
             </button>
+            {canFullscreen && (
+              <button
+                className={`fs-btn ${isFullscreen ? "on" : ""}`}
+                type="button"
+                onClick={toggleFullscreen}
+                aria-pressed={isFullscreen}
+                aria-label={isFullscreen ? copy.ui.fullscreenExit : copy.ui.fullscreenEnter}
+                title={isFullscreen ? copy.ui.fullscreenExit : copy.ui.fullscreenEnter}
+              >
+                {isFullscreen ? (
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M6 2v4H2M10 2v4h4M6 14v-4H2M10 14v-4h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M2 6V2h4M14 6V2h-4M2 10v4h4M14 10v4h-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </button>
+            )}
             <button className="lang" type="button" onClick={switchLocale} aria-label={copy.ui.switchLabel}>
               {copy.ui.switchText}
             </button>
