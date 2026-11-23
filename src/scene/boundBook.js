@@ -422,7 +422,7 @@ export function coverFoilMaps(book) {
     g.scale(w / 768, h / 1040);
     drawCoverFoilLayer(g, book, "#f2f2f2", "#a8a8a8");
     g.restore();
-  }, 512, 694, THREE.NoColorSpace);
+  }, 384, 520, THREE.NoColorSpace);
 
   const roughnessMap = canvasTex((g, w, h) => {
     g.fillStyle = "#d4d4d4";
@@ -431,7 +431,7 @@ export function coverFoilMaps(book) {
     g.scale(w / 768, h / 1040);
     drawCoverFoilLayer(g, book, "#242424", "#484848");
     g.restore();
-  }, 512, 694, THREE.NoColorSpace);
+  }, 384, 520, THREE.NoColorSpace);
 
   return { metalnessMap, roughnessMap };
 }
@@ -621,14 +621,14 @@ function endpaperTexture(clothHex) {
     g.fillStyle = "rgba(244, 214, 140, 0.42)";
     g.strokeStyle = "rgba(244, 214, 140, 0.22)";
     g.lineWidth = 1;
-    for (let y = 24; y < h; y += 48) {
-      for (let x = 24; x < w; x += 48) {
-        const ox = (Math.floor(y / 48) % 2) * 24;
-        drawStar4(g, (x + ox) % w, y, 5.5);
+    for (let y = 16; y < h; y += 32) {
+      for (let x = 16; x < w; x += 32) {
+        const ox = (Math.floor(y / 32) % 2) * 16;
+        drawStar4(g, (x + ox) % w, y, 3.8);
       }
     }
-    g.strokeRect(18, 18, w - 36, h - 36);
-  }, 512, 512);
+    g.strokeRect(12, 12, w - 24, h - 24);
+  }, 256, 256);
 }
 
 /**
@@ -802,6 +802,8 @@ export function buildBoundBook(book, assets) {
     hit,
     cover: coverMat,
     spine: spineMat,
+    board: boardMat,
+    innerPage: innerPageMat,
     frontPivot,
     ribbon: mark,
     ribbonBase,

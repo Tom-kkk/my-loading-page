@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { buildBoundBook, contactShadowTexture, coverFoilMaps, coverTexture, spineTexture } from "./boundBook.js";
 import { CometSky } from "./comets.js";
 import { createLiveCat } from "./liveCat.js";
@@ -121,6 +122,7 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
 
   const textureLoader = new THREE.TextureLoader();
   const modelLoader = new GLTFLoader();
+  modelLoader.setMeshoptDecoder(MeshoptDecoder);
   const loadMap = (url, options = {}) => new Promise((resolve) => {
     textureLoader.load(url, (tex) => {
       tex.colorSpace = options.color === false ? THREE.NoColorSpace : THREE.SRGBColorSpace;
@@ -152,15 +154,8 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
     ["cat.d16becc9eadb9302.glb", 1.55, 0.44],
     ["rose.1f7caba56f9befc9.glb", 2.2, 0.4],
   ];
-  const toyLoads = toyLayout.map(([file]) => loadModel(file));
-  const [woodMap, woodNormal, clothMap, edgeMap, paperNormal] = await Promise.all([
-    loadMap(`${ASSET}/textures/wood-planks.66ff16da40318ed3.webp`, { repeat: [3.2, 1] }),
-    loadMap(`${ASSET}/textures/wood-planks-normal.254001ca88b9a14b.webp`, { color: false, repeat: [3.2, 1] }),
-    loadMap(`${ASSET}/textures/cloth-neutral.bd2714a238f7ee4b.jpg`, { repeat: [3, 4] }),
-    loadMap(`${ASSET}/textures/page-edges.095c25b3de01500e.webp`, { repeat: [1, 1] }),
-    loadMap(`${ASSET}/textures/paper-normal.556c3bfed32a1880.webp`, { color: false }),
-  ]);
 
+  // 不阻塞首屏：先用程序化底纹立即呈现书架，小贴图和 3D 摆件分阶段后台渐进加载
   const wood = canvasTex((g, w, h) => {
     const wash = g.createLinearGradient(0, 0, 0, h);
     wash.addColorStop(0, "#f3d7aa");
@@ -180,17 +175,17 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
   wood.wrapS = wood.wrapT = THREE.RepeatWrapping;
   wood.repeat.set(2.2, 1);
   const woodMat = new THREE.MeshPhysicalMaterial({
-    map: woodMap || wood,
-    normalMap: woodNormal || null,
+    map: wood,
+    normalMap: null,
     normalScale: new THREE.Vector2(0.7, 0.7),
-    color: woodMap ? 0xf2d2a6 : 0xf4d2a4,
+    color: 0xf4d2a4,
     roughness: 0.4,
     metalness: 0.04,
     clearcoat: 0.16,
     clearcoatRoughness: 0.4,
     envMapIntensity: 0.48,
   });
-  const trimMat = new THREE.MeshStandardMaterial({ map: woodMap || wood, color: woodMap ? 0xb98a5a : 0xa86b38, roughness: 0.58 });
+  const trimMat = new THREE.MeshStandardMaterial({ map: wood, color: 0xa86b38, roughness: 0.58 });
 
   const brassBracketMat = new THREE.MeshPhysicalMaterial({
     color: 0xc9a055,
@@ -362,16 +357,6 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
     }
     return object;
   };
-  toyLoads.forEach((pending, index) => {
-    const [file, x, height] = toyLayout[index];
-    const kind = ornamentKind(file);
-    pending.then((model) => {
-      if (!alive) return;
-      if (model) placeToy(model, x, height, index, true, kind);
-      else placeToy(feltOrnament(kind), x, height, index, false, kind);
-    });
-  });
-
   const lampGlow = new THREE.PointLight("#ffb15e", 6, 3.6, 1.75);
   lampGlow.position.set(-1.7, 1.95, 0.15);
   scene.add(lampGlow);
@@ -403,7 +388,7 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
     roughness: 0.2,
   });
   const readGemGeo = new THREE.OctahedronGeometry(0.036, 0);
-  const bookAssets = { cloth: clothMap, edges: edgeMap, paperNormal };
+  const bookAssets = { cloth: null, edges: null, paperNormal: null };
   const shelfBooks = books.map((meta, i) => {
     const built = buildBoundBook(meta, bookAssets);
     const { group } = built;
@@ -459,11 +444,57 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
       glow,
       cover: built.cover,
       spine: built.spine,
+      board: built.board,
+      innerPage: built.innerPage,
       shadow,
     };
     scene.add(group);
     pickables.push(built.hit);
     return group;
+  });
+
+  // 阶段 1：优先下载轻量贴图并无感热替换；阶段 2：再并发拉取 3D 摆件，避免抢占首屏带宽
+  Promise.all([
+    loadMap(`${ASSET}/textures/wood-planks.66ff16da40318ed3.webp`, { repeat: [3.2, 1] }).then((tex) => {
+      if (!alive || !tex) return;
+      woodMat.map = tex;
+      woodMat.color.setHex(0xf2d2a6);
+      woodMat.needsUpdate = true;
+      trimMat.map = tex;
+      trimMat.color.setHex(0xb98a5a);
+      trimMat.needsUpdate = true;
+    }),
+    loadMap(`${ASSET}/textures/wood-planks-normal.254001ca88b9a14b.webp`, { color: false, repeat: [3.2, 1] }).then((tex) => {
+      if (!alive || !tex) return;
+      woodMat.normalMap = tex;
+      woodMat.needsUpdate = true;
+    }),
+    loadMap(`${ASSET}/textures/cloth-neutral.bd2714a238f7ee4b.jpg`, { repeat: [3, 4] }).then((tex) => {
+      if (!alive || !tex) return;
+      for (const b of shelfBooks) {
+        b.userData.board.map = tex;
+        b.userData.board.needsUpdate = true;
+      }
+    }),
+    loadMap(`${ASSET}/textures/paper-normal.556c3bfed32a1880.webp`, { color: false }).then((tex) => {
+      if (!alive || !tex) return;
+      for (const b of shelfBooks) {
+        b.userData.cover.normalMap = tex;
+        b.userData.cover.needsUpdate = true;
+        b.userData.innerPage.normalMap = tex;
+        b.userData.innerPage.needsUpdate = true;
+      }
+    }),
+  ]).finally(() => {
+    if (!alive) return;
+    toyLayout.forEach(([file, x, height], index) => {
+      const kind = ornamentKind(file);
+      loadModel(file).then((model) => {
+        if (!alive) return;
+        if (model) placeToy(model, x, height, index, true, kind);
+        else placeToy(feltOrnament(kind), x, height, index, false, kind);
+      });
+    });
   });
   let activeBookId = null;
   const repaintCovers = () => {
@@ -484,7 +515,9 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
       book.userData.spine.needsUpdate = true;
     }
   };
-  document.fonts.ready.then(repaintCovers);
+  if (document.fonts.status !== "loaded") {
+    document.fonts.ready.then(repaintCovers);
+  }
 
   const dustPos = new Float32Array(70 * 3);
   for (let i = 0; i < 70; i++) {
