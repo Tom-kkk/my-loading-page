@@ -1,7 +1,16 @@
 import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { themes } from "../data/content.js";
+import { buildBoundBook, contactShadowTexture, coverFoilMaps, coverTexture, spineTexture } from "./boundBook.js";
+import { CometSky } from "./comets.js";
+import { createLiveCat } from "./liveCat.js";
+import { NightSky } from "./nightSky.js";
+import { dressSurface, feltOrnament, ornamentKind } from "./ornaments.js";
+import { RosePetals } from "./rosePetals.js";
+import { addShelfFurniture } from "./shelfFurniture.js";
+import { SoundKit } from "./soundKit.js";
+import { Sparkles } from "./sparkles.js";
 
 const ASSET = "/story-assets/public";
 // 镜头要把上层摆件完整收进画面。
@@ -17,246 +26,13 @@ function canvasTex(draw, w, h) {
   return tex;
 }
 
-function roundRect(g, x, y, w, h, r) {
-  g.beginPath();
-  g.moveTo(x + r, y);
-  g.arcTo(x + w, y, x + w, y + h, r);
-  g.arcTo(x + w, y + h, x, y + h, r);
-  g.arcTo(x, y + h, x, y, r);
-  g.arcTo(x, y, x + w, y, r);
-  g.closePath();
-}
-
-function starsOn(g, x, y, w, h, n) {
-  for (let i = 0; i < n; i++) {
-    const sx = x + ((i * 97 + 13) % w);
-    const sy = y + ((i * 53 + 7) % h);
-    const big = i % 7 === 0;
-    g.fillStyle = big ? "#fff6d4" : "rgba(255,248,230,.92)";
-    g.beginPath();
-    g.arc(sx, sy, big ? 2.8 : 1.15, 0, Math.PI * 2);
-    g.fill();
-  }
-}
-
-function paintPlate(g, id, w, h) {
-  if (id === "about") {
-    const sky = g.createLinearGradient(0, 0, 0, h);
-    sky.addColorStop(0, "#10183a");
-    sky.addColorStop(1, "#35508f");
-    g.fillStyle = sky;
-    g.fillRect(0, 0, w, h);
-    starsOn(g, 0, 0, w, h * 0.7, 70);
-    g.fillStyle = "#fff3c4";
-    g.beginPath();
-    g.arc(w * 0.66, h * 0.32, Math.min(w, h) * 0.16, 0, Math.PI * 2);
-    g.fill();
-    g.fillStyle = "#1a2748";
-    g.beginPath();
-    g.arc(w * 0.74, h * 0.28, Math.min(w, h) * 0.13, 0, Math.PI * 2);
-    g.fill();
-    g.fillStyle = "#12182f";
-    g.beginPath();
-    g.moveTo(0, h);
-    g.quadraticCurveTo(w * 0.4, h * 0.58, w, h * 0.72);
-    g.lineTo(w, h);
-    g.fill();
-    g.fillStyle = "#ff5d6c";
-    g.beginPath();
-    g.ellipse(w * 0.28, h * 0.58, w * 0.055, h * 0.07, 0, 0, Math.PI * 2);
-    g.fill();
-    g.strokeStyle = "rgba(255,240,210,.8)";
-    g.lineWidth = 3;
-    g.beginPath();
-    g.moveTo(w * 0.28, h * 0.65);
-    g.quadraticCurveTo(w * 0.36, h * 0.75, w * 0.24, h * 0.86);
-    g.stroke();
-    return;
-  }
-  if (id === "projects") {
-    const sky = g.createLinearGradient(0, 0, w, h);
-    sky.addColorStop(0, "#2a1448");
-    sky.addColorStop(0.5, "#6a2a55");
-    sky.addColorStop(1, "#c45a3a");
-    g.fillStyle = sky;
-    g.fillRect(0, 0, w, h);
-    starsOn(g, 0, 0, w, h, 50);
-    ["#ff8ea0", "#7eb6ff", "#7ee0c6"].forEach((color, i) => {
-      g.fillStyle = color;
-      g.beginPath();
-      g.arc(w * (0.22 + i * 0.22), h * (0.62 - i * 0.06), 18 + i * 4, 0, Math.PI * 2);
-      g.fill();
-    });
-    g.strokeStyle = "rgba(255, 230, 170, .95)";
-    g.lineWidth = 8;
-    g.lineCap = "round";
-    g.beginPath();
-    g.moveTo(w * 0.18, h * 0.42);
-    g.quadraticCurveTo(w * 0.45, h * 0.3, w * 0.78, h * 0.18);
-    g.stroke();
-    g.fillStyle = "#fffaf0";
-    g.beginPath();
-    g.arc(w * 0.8, h * 0.17, 16, 0, Math.PI * 2);
-    g.fill();
-    return;
-  }
-  if (id === "craft") {
-    const sky = g.createLinearGradient(0, 0, 0, h);
-    sky.addColorStop(0, "#0c2438");
-    sky.addColorStop(1, "#148a86");
-    g.fillStyle = sky;
-    g.fillRect(0, 0, w, h);
-    starsOn(g, 0, 40, w, h * 0.4, 30);
-    for (let i = 0; i < 4; i++) {
-      const x = w * (0.18 + i * 0.21);
-      g.strokeStyle = "rgba(255, 224, 160, .7)";
-      g.beginPath();
-      g.moveTo(x, h * 0.18);
-      g.lineTo(x, h * 0.38);
-      g.stroke();
-      g.fillStyle = i % 2 ? "#ffe08a" : "#7ee0c6";
-      g.beginPath();
-      g.ellipse(x, h * 0.48, 28, 36, 0, 0, Math.PI * 2);
-      g.fill();
-      g.fillStyle = "rgba(255,255,255,.35)";
-      g.beginPath();
-      g.ellipse(x - 8, h * 0.44, 8, 12, 0, 0, Math.PI * 2);
-      g.fill();
-    }
-    return;
-  }
-  const desk = g.createLinearGradient(0, 0, 0, h);
-  desk.addColorStop(0, "#24160e");
-  desk.addColorStop(1, "#8a4e28");
-  g.fillStyle = desk;
-  g.fillRect(0, 0, w, h);
-  g.fillStyle = "#fff6e4";
-  roundRect(g, w * 0.16, h * 0.2, w * 0.68, h * 0.5, 12);
-  g.fill();
-  g.strokeStyle = "#e0c48a";
-  g.lineWidth = 4;
-  g.stroke();
-  g.fillStyle = "#e25b4a";
-  g.beginPath();
-  g.arc(w * 0.5, h * 0.46, Math.min(w, h) * 0.08, 0, Math.PI * 2);
-  g.fill();
-  g.fillStyle = "#fff6e4";
-  g.font = "700 36px Georgia, serif";
-  g.textAlign = "center";
-  g.textBaseline = "middle";
-  g.fillText("A", w * 0.5, h * 0.47);
-}
-
-function coverTexture(book) {
-  return canvasTex((g, w, h) => {
-    paintPlate(g, book.id, w, h);
-    const shade = g.createLinearGradient(0, h * 0.62, 0, h);
-    shade.addColorStop(0, "rgba(8,10,24,0)");
-    shade.addColorStop(1, "rgba(8,10,24,.72)");
-    g.fillStyle = shade;
-    g.fillRect(0, h * 0.62, w, h * 0.38);
-    g.strokeStyle = "rgba(255, 220, 150, .95)";
-    g.lineWidth = 10;
-    roundRect(g, 18, 18, w - 36, h - 36, 8);
-    g.stroke();
-    g.strokeStyle = "rgba(255,255,255,.35)";
-    g.lineWidth = 2;
-    roundRect(g, 32, 32, w - 64, h - 64, 6);
-    g.stroke();
-    g.textAlign = "center";
-    g.textBaseline = "middle";
-    g.fillStyle = "#fff6df";
-    let titleSize = 108;
-    g.font = `700 ${titleSize}px 'Baloo 2', 'Microsoft YaHei', sans-serif`;
-    while (titleSize > 52 && g.measureText(book.title).width > w * 0.78) {
-      titleSize -= 6;
-      g.font = `700 ${titleSize}px 'Baloo 2', 'Microsoft YaHei', sans-serif`;
-    }
-    g.fillText(book.title, w / 2, h * 0.8);
-    g.fillStyle = "#ffd56a";
-    let kickerSize = 28;
-    g.font = `600 ${kickerSize}px Fredoka, 'Microsoft YaHei', sans-serif`;
-    while (kickerSize > 16 && g.measureText(book.kicker).width > w * 0.8) {
-      kickerSize -= 2;
-      g.font = `600 ${kickerSize}px Fredoka, 'Microsoft YaHei', sans-serif`;
-    }
-    g.fillText(book.kicker, w / 2, h * 0.9);
-  }, 768, 1040);
-}
-
-function spineTexture(book) {
-  return canvasTex((g, w, h) => {
-    g.fillStyle = themes[book.id].cloth;
-    g.fillRect(0, 0, w, h);
-    g.fillStyle = "rgba(255, 224, 170, .45)";
-    g.fillRect(10, 0, 8, h);
-    const chars = [...book.title];
-    const latin = /^[\u0000-\u007F]+$/.test(book.title);
-    const step = latin ? 58 : 78;
-    g.fillStyle = "#fff6df";
-    g.font = `700 ${latin ? 40 : 54}px 'Microsoft YaHei', sans-serif`;
-    g.textAlign = "center";
-    g.textBaseline = "middle";
-    const top = h / 2 - ((chars.length - 1) * step) / 2;
-    chars.forEach((ch, i) => g.fillText(ch, w / 2, top + i * step));
-  }, 180, 1040);
-}
-
 function glide(data, target, dt) {
   data.hoverV += (target - data.hover) * 58 * dt;
   data.hoverV *= Math.exp(-15 * dt);
   data.hover += data.hoverV * dt;
 }
 
-function charmTexture(kind) {
-  return canvasTex((g, w, h) => {
-    g.clearRect(0, 0, w, h);
-    if (kind === "moon") {
-      g.fillStyle = "#fff1c4";
-      g.beginPath();
-      g.arc(w * 0.4, h * 0.5, w * 0.34, 0, Math.PI * 2);
-      g.fill();
-      g.globalCompositeOperation = "destination-out";
-      g.beginPath();
-      g.arc(w * 0.58, h * 0.4, w * 0.28, 0, Math.PI * 2);
-      g.fill();
-      return;
-    }
-    if (kind === "star") {
-      g.fillStyle = "#ffd56a";
-      g.shadowColor = "#ffd56a";
-      g.shadowBlur = 16;
-      g.beginPath();
-      for (let i = 0; i < 10; i++) {
-        const r = i % 2 === 0 ? w * 0.44 : w * 0.18;
-        const a = -Math.PI / 2 + i * Math.PI / 5;
-        const px = w / 2 + Math.cos(a) * r;
-        const py = h / 2 + Math.sin(a) * r;
-        if (i === 0) g.moveTo(px, py);
-        else g.lineTo(px, py);
-      }
-      g.closePath();
-      g.fill();
-      return;
-    }
-    const tail = g.createLinearGradient(w * 0.08, h * 0.72, w * 0.75, h * 0.32);
-    tail.addColorStop(0, "rgba(255,214,140,0)");
-    tail.addColorStop(1, "rgba(255,246,220,.98)");
-    g.strokeStyle = tail;
-    g.lineWidth = 22;
-    g.lineCap = "round";
-    g.beginPath();
-    g.moveTo(w * 0.1, h * 0.74);
-    g.quadraticCurveTo(w * 0.4, h * 0.52, w * 0.72, h * 0.34);
-    g.stroke();
-    g.fillStyle = "#fffaf0";
-    g.beginPath();
-    g.arc(w * 0.74, h * 0.32, 26, 0, Math.PI * 2);
-    g.fill();
-  }, 256, 256);
-}
-
-export async function mountShelf(canvas, { onOpen, books }) {
+export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, books }) {
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: true,
@@ -266,9 +42,9 @@ export async function mountShelf(canvas, { onOpen, books }) {
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.12;
+  renderer.toneMappingExposure = 1.04;
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#070b16");
@@ -278,18 +54,26 @@ export async function mountShelf(canvas, { onOpen, books }) {
   pmrem.dispose();
 
   const camera = new THREE.PerspectiveCamera(33, 1, 0.1, 40);
+  const sparkles = new Sparkles(renderer);
+  const sound = new SoundKit();
+  const nightSky = new NightSky(scene);
+  const cometSky = new CometSky(scene);
+  const rosePetals = new RosePetals(scene);
 
   const camTarget = new THREE.Vector3(0, 1.02, 0);
   let folioOpen = false;
   const home = { y: 1.12, z: 6.4 };
   const BOOK_W = 0.92;
   const BOOK_H = 1.28;
-  const BOOK_D = 0.18;
   const gap = 1.08;
 
   function resize() {
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+    const dpr = Math.min(devicePixelRatio, 1.5);
+    renderer.setPixelRatio(dpr);
     renderer.setSize(innerWidth, innerHeight);
+    sparkles.resize(innerWidth, innerHeight, dpr);
+    nightSky.setDpr(dpr);
+    cometSky.setDpr(dpr);
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
   }
@@ -300,9 +84,10 @@ export async function mountShelf(canvas, { onOpen, books }) {
     const tanV = Math.tan(vFov / 2);
     const hFov = 2 * Math.atan(tanV * Math.max(camera.aspect, 0.75));
     const distW = (span / 2) / Math.tan(hFov / 2);
-    // 顶上的摆件要留在页眉下面，宽屏不能只按书的高度取景。
+    // 顶上的摆件要留在页眉下面，宽屏与手机横屏都要完整收进上下两层。
     const toyTop = 2.35;
-    const distH = (toyTop - look.y) / (0.58 * tanV);
+    const compactLandscape = innerHeight <= 520 && innerWidth > innerHeight;
+    const distH = (toyTop - look.y) / ((compactLandscape ? 0.54 : 0.58) * tanV);
     home.z = Math.max(distW, distH, 4.4);
     home.y = look.y + 0.06;
     if (!folioOpen) camTarget.set(0, look.y, 0);
@@ -311,7 +96,7 @@ export async function mountShelf(canvas, { onOpen, books }) {
   window.addEventListener("resize", resize);
   window.addEventListener("resize", fitView);
 
-  scene.add(new THREE.AmbientLight("#9eb0e4", 0.32));
+  scene.add(new THREE.AmbientLight("#9eb0e4", 0.22));
   const moonLight = new THREE.DirectionalLight("#d5e4ff", 0.7);
   moonLight.position.set(-3.4, 5.6, 2.2);
   scene.add(moonLight);
@@ -319,15 +104,20 @@ export async function mountShelf(canvas, { onOpen, books }) {
   key.intensity = 1.55;
   key.position.set(2.2, 4.6, 4.4);
   key.castShadow = true;
-  key.shadow.mapSize.set(1024, 1024);
+  const shadowRes = Math.min(innerWidth, innerHeight) <= 768 ? 1024 : 2048;
+  key.shadow.mapSize.set(shadowRes, shadowRes);
   key.shadow.camera.near = 0.4;
   key.shadow.camera.far = 16;
   key.shadow.camera.left = -4.5;
   key.shadow.camera.right = 4.5;
   key.shadow.camera.top = 3.4;
   key.shadow.camera.bottom = -1.4;
-  key.shadow.bias = -0.00035;
+  key.shadow.bias = -0.0004;
+  key.shadow.normalBias = 0.02;
   scene.add(key);
+  const fill = new THREE.PointLight(0xffe6c4, 3.2, 8, 2);
+  fill.position.set(0.2, 1.25, 3.1);
+  scene.add(fill);
 
   const textureLoader = new THREE.TextureLoader();
   const modelLoader = new GLTFLoader();
@@ -352,11 +142,12 @@ export async function mountShelf(canvas, { onOpen, books }) {
     ["rose.1f7caba56f9befc9.glb", 2.2, 0.4],
   ];
   const toyLoads = toyLayout.map(([file]) => loadModel(file));
-  const [woodMap, woodNormal, clothMap, edgeMap] = await Promise.all([
+  const [woodMap, woodNormal, clothMap, edgeMap, paperNormal] = await Promise.all([
     loadMap(`${ASSET}/textures/wood-planks.66ff16da40318ed3.webp`, { repeat: [3.2, 1] }),
     loadMap(`${ASSET}/textures/wood-planks-normal.254001ca88b9a14b.webp`, { color: false, repeat: [3.2, 1] }),
-    loadMap(`${ASSET}/textures/cloth-neutral.bd2714a238f7ee4b.jpg`, { repeat: [2, 2] }),
-    loadMap(`${ASSET}/textures/page-edges.095c25b3de01500e.webp`, { repeat: [1, 6] }),
+    loadMap(`${ASSET}/textures/cloth-neutral.bd2714a238f7ee4b.jpg`, { repeat: [3, 4] }),
+    loadMap(`${ASSET}/textures/page-edges.095c25b3de01500e.webp`, { repeat: [1, 1] }),
+    loadMap(`${ASSET}/textures/paper-normal.556c3bfed32a1880.webp`, { color: false }),
   ]);
 
   const wood = canvasTex((g, w, h) => {
@@ -377,163 +168,60 @@ export async function mountShelf(canvas, { onOpen, books }) {
   }, 512, 512);
   wood.wrapS = wood.wrapT = THREE.RepeatWrapping;
   wood.repeat.set(2.2, 1);
-  const woodMat = new THREE.MeshStandardMaterial({
+  const woodMat = new THREE.MeshPhysicalMaterial({
     map: woodMap || wood,
     normalMap: woodNormal || null,
-    normalScale: new THREE.Vector2(0.55, 0.55),
-    color: woodMap ? 0xf0cfa0 : 0xf4d2a4,
-    roughness: 0.52,
-    metalness: 0.02,
+    normalScale: new THREE.Vector2(0.7, 0.7),
+    color: woodMap ? 0xf2d2a6 : 0xf4d2a4,
+    roughness: 0.4,
+    metalness: 0.04,
+    clearcoat: 0.16,
+    clearcoatRoughness: 0.4,
+    envMapIntensity: 0.48,
   });
   const trimMat = new THREE.MeshStandardMaterial({ map: woodMap || wood, color: woodMap ? 0xb98a5a : 0xa86b38, roughness: 0.58 });
 
-  const nightSky = canvasTex((g, w, h) => {
-    const sky = g.createLinearGradient(0, 0, 0, h);
-    sky.addColorStop(0, "#050814");
-    sky.addColorStop(0.42, "#0c1733");
-    sky.addColorStop(0.78, "#163056");
-    sky.addColorStop(1, "#241848");
-    g.fillStyle = sky;
-    g.fillRect(0, 0, w, h);
-    g.save();
-    g.translate(w * 0.08, h * 0.02);
-    g.rotate(-0.42);
-    for (let i = 0; i < 7; i += 1) {
-      const band = g.createLinearGradient(0, 0, w * 1.4, h * 0.2);
-      band.addColorStop(0, "rgba(190,205,255,0)");
-      band.addColorStop(0.42, `rgba(225,230,255,${0.05 + i * 0.012})`);
-      band.addColorStop(0.58, `rgba(255,248,255,${0.07 + i * 0.008})`);
-      band.addColorStop(1, "rgba(150,160,220,0)");
-      g.fillStyle = band;
-      g.fillRect(-w * 0.1, h * (0.16 + i * 0.018), w * 1.5, h * (0.2 - i * 0.012));
-    }
-    g.restore();
-    let seed = 11;
-    const rand = () => {
-      seed = (seed * 16807) % 2147483647;
-      return seed / 2147483647;
-    };
-    for (let i = 0; i < 700; i += 1) {
-      const x = rand() * w;
-      const y = rand() * h * 0.96;
-      const mag = rand();
-      const radius = mag > 0.992 ? 2.4 : mag > 0.96 ? 1.35 : 0.55;
-      g.fillStyle = rand() > 0.86
-        ? `rgba(255,228,196,${0.55 + rand() * 0.45})`
-        : `rgba(232,240,255,${0.4 + rand() * 0.6})`;
-      g.beginPath();
-      g.arc(x, y, radius, 0, Math.PI * 2);
-      g.fill();
-    }
-    const mx = w * 0.8;
-    const my = h * 0.2;
-    const mr = Math.min(w, h) * 0.048;
-    const halo = g.createRadialGradient(mx, my, mr * 0.8, mx, my, mr * 5.5);
-    halo.addColorStop(0, "rgba(255,244,220,0.28)");
-    halo.addColorStop(1, "rgba(255,244,220,0)");
-    g.fillStyle = halo;
-    g.beginPath();
-    g.arc(mx, my, mr * 5.5, 0, Math.PI * 2);
-    g.fill();
-    const moon = g.createRadialGradient(mx - mr * 0.35, my - mr * 0.35, mr * 0.15, mx, my, mr);
-    moon.addColorStop(0, "#fffaf0");
-    moon.addColorStop(0.62, "#f3e6c8");
-    moon.addColorStop(1, "#d9c7a2");
-    g.fillStyle = moon;
-    g.beginPath();
-    g.arc(mx, my, mr, 0, Math.PI * 2);
-    g.fill();
-    g.fillStyle = "rgba(168,148,118,0.35)";
-    for (let i = 0; i < 9; i += 1) {
-      g.beginPath();
-      g.arc(mx + (rand() - 0.5) * mr * 1.1, my + (rand() - 0.45) * mr, mr * (0.05 + rand() * 0.07), 0, Math.PI * 2);
-      g.fill();
-    }
-  }, 1280, 720);
-  const sky = new THREE.Mesh(
-    new THREE.PlaneGeometry(42, 24),
-    new THREE.MeshBasicMaterial({ map: nightSky, depthWrite: false }),
-  );
-  sky.position.set(0, 1.7, -2.4);
-  sky.material.fog = false;
-  scene.add(sky);
-
-  const starPositions = new Float32Array(420 * 3);
-  for (let i = 0; i < 420; i++) {
-    starPositions[i * 3] = (Math.random() - 0.5) * 16;
-    starPositions[i * 3 + 1] = 1.2 + Math.random() * 4.2;
-    starPositions[i * 3 + 2] = -1.6 - Math.random() * 3.2;
-  }
-  const starGeo = new THREE.BufferGeometry();
-  starGeo.setAttribute("position", new THREE.BufferAttribute(starPositions, 3));
-  const starField = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xfff6d8, size: 0.02, transparent: true, opacity: 0.35, depthWrite: false }));
-  starField.material.fog = false;
-  scene.add(starField);
-
-  const streakMap = canvasTex((g, w, h) => {
-    g.clearRect(0, 0, w, h);
-    const glow = g.createLinearGradient(0, h / 2, w, h / 2);
-    glow.addColorStop(0, "rgba(255,244,214,0)");
-    glow.addColorStop(0.55, "rgba(255,214,150,0.15)");
-    glow.addColorStop(0.82, "rgba(255,236,210,0.55)");
-    glow.addColorStop(0.96, "rgba(255,252,245,1)");
-    glow.addColorStop(1, "rgba(255,255,255,0)");
-    g.strokeStyle = glow;
-    g.lineWidth = 22;
-    g.lineCap = "round";
-    g.beginPath();
-    g.moveTo(6, h / 2);
-    g.lineTo(w - 4, h / 2);
-    g.stroke();
-    g.strokeStyle = "rgba(255,255,255,0.95)";
-    g.lineWidth = 3;
-    g.beginPath();
-    g.moveTo(w * 0.72, h / 2);
-    g.lineTo(w - 10, h / 2);
-    g.stroke();
-  }, 512, 64);
-  const meteors = [];
-  for (let i = 0; i < 8; i++) {
-    const material = new THREE.MeshBasicMaterial({
-      map: streakMap,
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      opacity: 0,
-    });
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.12), material);
-    mesh.visible = false;
-    mesh.userData.dir = new THREE.Vector3();
-    scene.add(mesh);
-    meteors.push(mesh);
-  }
-  let showerWait = 5;
-  let showerLeft = 0;
-  const launchMeteor = (mesh, bright) => {
-    mesh.position.set(-6 + Math.random() * 14, 3.05 + Math.random() * 1.1, -1.7);
-    const angle = -2.4 + (Math.random() - 0.5) * 0.16;
-    mesh.userData.dir.set(Math.cos(angle), Math.sin(angle), 0);
-    mesh.rotation.z = angle;
-    const length = bright ? 2.4 : 1.6 + Math.random() * 0.4;
-    mesh.scale.set(length, bright ? 1.15 : 0.8, 1);
-    mesh.userData.speed = bright ? 1.35 : 0.85 + Math.random() * 0.25;
-    mesh.userData.age = 0;
-    mesh.material.opacity = 0;
-    mesh.visible = true;
-  };
-
-  const plank = (w, h, d, x, y, z, mat) => {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  const brassBracketMat = new THREE.MeshPhysicalMaterial({
+    color: 0xc9a055,
+    metalness: 0.84,
+    roughness: 0.34,
+    clearcoat: 0.25,
+    clearcoatRoughness: 0.3,
+    envMapIntensity: 1.0,
+  });
+  const plank = (w, h, d, x, y, z, mat, radius = 0.012) => {
+    const mesh = new THREE.Mesh(new RoundedBoxGeometry(w, h, d, 3, radius), mat);
     mesh.position.set(x, y, z);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     scene.add(mesh);
+    return mesh;
   };
-  plank(5.4, 0.08, 0.5, 0, 0, 0, woodMat);
-  plank(5.4, 0.04, 0.03, 0, 0.03, 0.24, trimMat);
-  plank(5.4, 0.055, 0.42, 0, 1.58, -0.28, woodMat);
-  plank(5.4, 0.028, 0.03, 0, 1.6, -0.08, trimMat);
-  for (const x of [-1.85, 0, 1.85]) plank(0.07, 0.24, 0.07, x, -0.14, -0.18, trimMat);
+  plank(5.44, 0.084, 0.52, 0, 0, 0, woodMat, 0.016);
+  plank(5.44, 0.036, 0.03, 0, 0.032, 0.25, trimMat, 0.008);
+  plank(5.44, 0.058, 0.44, 0, 1.58, -0.28, woodMat, 0.012);
+  plank(5.44, 0.026, 0.028, 0, 1.6, -0.075, trimMat, 0.007);
+  // 金属装饰细条嵌入层板前缘
+  plank(5.36, 0.007, 0.008, 0, 0.0, 0.262, brassBracketMat, 0.002);
+  plank(5.36, 0.006, 0.008, 0, 1.58, -0.058, brassBracketMat, 0.002);
+  for (const x of [-1.85, 0, 1.85]) {
+    plank(0.044, 0.23, 0.044, x, -0.125, -0.16, brassBracketMat, 0.008);
+    const brace = new THREE.Mesh(new RoundedBoxGeometry(0.034, 0.034, 0.3, 2, 0.006), brassBracketMat);
+    brace.position.set(x, -0.068, 0.02);
+    brace.rotation.x = -0.68;
+    brace.castShadow = true;
+    brace.receiveShadow = true;
+    scene.add(brace);
+  }
+  for (const x of [-1.85, 1.85]) {
+    plank(0.036, 0.16, 0.036, x, 1.48, -0.38, brassBracketMat, 0.006);
+    const topBrace = new THREE.Mesh(new RoundedBoxGeometry(0.028, 0.028, 0.22, 2, 0.005), brassBracketMat);
+    topBrace.position.set(x, 1.515, -0.25);
+    topBrace.rotation.x = -0.62;
+    topBrace.castShadow = true;
+    topBrace.receiveShadow = true;
+    scene.add(topBrace);
+  }
 
   const stand = (object, height) => {
     object.updateMatrixWorld(true);
@@ -562,72 +250,153 @@ export async function mountShelf(canvas, { onOpen, books }) {
     object.add(proxy);
     pickables.push(proxy);
   };
-  const placeToy = (model, x, height, index) => {
-    if (!alive || !model) return;
+  const shadowMap = contactShadowTexture();
+  const furniture = addShelfFurniture(scene, shadowMap);
+  const footShadow = (width, depth) => {
+    const material = new THREE.MeshBasicMaterial({
+      map: shadowMap,
+      transparent: true,
+      depthWrite: false,
+      opacity: 0.42,
+    });
+    material.polygonOffset = true;
+    material.polygonOffsetFactor = -2;
+    material.polygonOffsetUnits = -2;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, depth), material);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.renderOrder = 1;
+    return mesh;
+  };
+  const retire = (object) => {
+    scene.remove(object);
+    if (object.userData.shadow) scene.remove(object.userData.shadow);
+    const index = toys.indexOf(object);
+    if (index >= 0) toys.splice(index, 1);
+    for (let i = pickables.length - 1; i >= 0; i -= 1) {
+      let node = pickables[i];
+      while (node) {
+        if (node === object) {
+          pickables.splice(i, 1);
+          break;
+        }
+        node = node.parent;
+      }
+    }
+  };
+  const liveCat = createLiveCat(shadowMap);
+  scene.add(liveCat, liveCat.userData.shadow);
+  pickables.push(liveCat.userData.hit);
+  let catOrnament = null;
+
+  const projectScreen = (worldPos) => {
+    const v = worldPos.clone().project(camera);
+    return {
+      x: (v.x * 0.5 + 0.5) * innerWidth,
+      y: (-v.y * 0.5 + 0.5) * innerHeight,
+    };
+  };
+
+  const setCatOrnamentVisible = (visible) => {
+    if (!catOrnament) return;
+    catOrnament.visible = visible;
+    if (catOrnament.userData.shadow) catOrnament.userData.shadow.visible = visible;
+  };
+
+  const recallCat = (playSound = false) => {
+    if (!liveCat.userData.isActive() || liveCat.userData.isBusy()) return;
+    if (playSound) sound.catMeow(false);
+    const p = projectScreen(liveCat.position);
+    sparkles.burst(p.x, p.y, 16, 0.9);
+    liveCat.userData.returnHome({
+      onArriveUpper: () => {
+        setCatOrnamentVisible(true);
+        if (catOrnament) {
+          const up = projectScreen(catOrnament.position);
+          sparkles.burst(up.x, up.y, 18, 0.9);
+        }
+      },
+    });
+  };
+
+  const placeToy = (model, x, height, index, painted, kind) => {
+    if (!alive || !model) return null;
+    if (painted) dressSurface(model);
     const object = stand(model, height);
-    object.position.x = x;
-    object.position.z = -0.22;
-    object.position.y += 1.64;
+    const foot = object.position.y;
+    object.position.set(x, foot + 1.64, -0.22);
     object.rotation.y = index % 2 ? 0.35 : -0.2;
     object.userData.ornament = true;
+    object.userData.kind = kind;
+    object.userData.baseX = x;
     object.userData.baseY = object.position.y;
     object.userData.baseZ = object.position.z;
     object.userData.baseRotY = object.rotation.y;
     object.userData.baseScale = object.scale.clone();
     object.userData.hover = 0;
     object.userData.hoverV = 0;
-    object.traverse((node) => {
-      if (!node.isMesh) return;
-      node.castShadow = false;
-      node.receiveShadow = true;
-    });
-    scene.add(object);
+    object.userData.flight = null;
+    object.updateMatrixWorld(true);
+    const fitted = new THREE.Box3().setFromObject(object).getSize(new THREE.Vector3());
+    const shadow = footShadow(Math.max(fitted.x, 0.18) * 0.9, Math.max(fitted.z, 0.14) * 0.8);
+    shadow.position.set(x, 1.612, -0.22);
+    object.userData.shadow = shadow;
+    scene.add(object, shadow);
     addHitProxy(object);
     toys.push(object);
+    if (kind === "cat") {
+      catOrnament = object;
+      if (liveCat.userData.isActive()) setCatOrnamentVisible(false);
+    }
+    return object;
   };
   toyLoads.forEach((pending, index) => {
-    const [, x, height] = toyLayout[index];
-    pending.then((model) => placeToy(model, x, height, index));
+    const [file, x, height] = toyLayout[index];
+    const kind = ornamentKind(file);
+    const standIn = placeToy(feltOrnament(kind), x, height, index, false, kind);
+    pending.then((model) => {
+      if (!alive || !model) return;
+      if (standIn) retire(standIn);
+      placeToy(model, x, height, index, true, kind);
+    });
   });
 
-  const lampGlow = new THREE.PointLight("#ffb15e", 6, 3.2, 1.8);
+  const lampGlow = new THREE.PointLight("#ffb15e", 6, 3.6, 1.75);
   lampGlow.position.set(-1.7, 1.95, 0.15);
   scene.add(lampGlow);
+  let lampOn = true;
+  let lampLevel = 1;
 
-  const edgeMat = new THREE.MeshStandardMaterial({ map: edgeMap, color: "#f3e8cf", roughness: 0.92 });
-  const weave = clothMap;
+  // 跟随鼠标的柔和暖金微光，划过书封时实时扫亮烫金与黄铜细节
+  const cursorLight = new THREE.PointLight("#ffe6b8", 0, 2.8, 1.85);
+  cursorLight.position.set(0, 1.0, 0.78);
+  scene.add(cursorLight);
+  let pointerInside = false;
+  const cursorLightGoal = new THREE.Vector3(0, 1.0, 0.78);
 
+  // 火箭点火与反推降落时的橙金尾焰光源
+  const rocketLight = new THREE.PointLight("#ff8c38", 0, 2.6, 1.7);
+  rocketLight.position.set(0.8, 1.7, -0.1);
+  scene.add(rocketLight);
+  // 玫瑰绽放时的柔和粉金微光
+  const roseLight = new THREE.PointLight("#ff7ca6", 0, 2.2, 1.8);
+  roseLight.position.set(2.2, 1.9, -0.1);
+  scene.add(roseLight);
+  const nozzleWorld = new THREE.Vector3();
+
+  const readGemMat = new THREE.MeshPhysicalMaterial({
+    color: 0xffdf80,
+    emissive: 0xffb84d,
+    emissiveIntensity: 0.75,
+    metalness: 0.85,
+    roughness: 0.2,
+  });
+  const readGemGeo = new THREE.OctahedronGeometry(0.036, 0);
+  const bookAssets = { cloth: clothMap, edges: edgeMap, paperNormal };
   const shelfBooks = books.map((meta, i) => {
-    const cover = new THREE.MeshStandardMaterial({ map: coverTexture(meta), roughness: 0.46, metalness: 0.02 });
-    const cloth = new THREE.MeshStandardMaterial({ map: weave, color: themes[meta.id].cloth, roughness: 0.68 });
-    const spine = new THREE.MeshStandardMaterial({ map: spineTexture(meta), roughness: 0.58 });
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(BOOK_W, BOOK_H, BOOK_D), [edgeMat, spine, edgeMat, edgeMat, cover, cloth]);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    const ribbon = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.1, 0.32),
-      new THREE.MeshBasicMaterial({
-        map: canvasTex((g, w, h) => {
-          g.clearRect(0, 0, w, h);
-          g.fillStyle = themes[meta.id].seal;
-          g.beginPath();
-          g.moveTo(w * 0.32, h);
-          g.lineTo(w * 0.68, h);
-          g.lineTo(w * 0.68, h * 0.26);
-          g.lineTo(w * 0.5, h * 0.05);
-          g.lineTo(w * 0.32, h * 0.26);
-          g.closePath();
-          g.fill();
-        }, 64, 180),
-        transparent: true,
-        depthWrite: false,
-        side: THREE.DoubleSide,
-      }),
-    );
-    ribbon.material.fog = false;
-    ribbon.position.set(0.18, BOOK_H / 2 + 0.07, 0.02);
+    const built = buildBoundBook(meta, bookAssets);
+    const { group } = built;
     const glow = new THREE.Mesh(
-      new THREE.PlaneGeometry(1.55, 1.9),
+      new THREE.PlaneGeometry(1.35, 1.7),
       new THREE.MeshBasicMaterial({
         map: canvasTex((g, w, h) => {
           const rad = g.createRadialGradient(w / 2, h / 2, 8, w / 2, h / 2, w / 2);
@@ -641,26 +410,63 @@ export async function mountShelf(canvas, { onOpen, books }) {
         opacity: 0,
       }),
     );
-    glow.position.set(0, 0.05, -0.2);
-    const group = new THREE.Group();
-    group.add(mesh, ribbon, glow);
+    glow.position.set(0, 0.02, -0.16);
+    group.add(glow);
     const x = (i - (books.length - 1) / 2) * gap;
-    const lean = -0.03;
-    group.position.set(x, 0.05 + (BOOK_H / 2) * Math.cos(lean), 0.04);
-    group.rotation.x = lean;
-    group.userData = { meta, baseX: x, baseY: group.position.y, baseZ: group.position.z, hover: 0, hoverV: 0, glow, cover, spine };
+    const lean = -0.045;
+    group.position.set(x, 0.042 + (built.height / 2) * Math.cos(lean), 0.05);
+    group.rotation.set(lean, 0.045, built.profile.tiltZ);
+    const shadow = footShadow(BOOK_W * 0.92, 0.22);
+    shadow.position.set(x, 0.046, 0.08);
+    scene.add(shadow);
+
+    // 读完该卷后在书架前缘点亮的金色星钻徽记
+    const readGem = new THREE.Mesh(readGemGeo, readGemMat);
+    readGem.position.set(x, 0.085, 0.255);
+    readGem.scale.setScalar(0.001);
+    readGem.visible = false;
+    scene.add(readGem);
+
+    group.userData = {
+      meta,
+      index: i,
+      baseX: x,
+      baseY: group.position.y,
+      baseZ: group.position.z,
+      baseTiltZ: built.profile.tiltZ,
+      hover: 0,
+      hoverV: 0,
+      pull: 0,
+      pullV: 0,
+      read: false,
+      readScale: 0,
+      readGem,
+      frontPivot: built.frontPivot,
+      ribbon: built.ribbon,
+      ribbonBase: built.ribbonBase,
+      glow,
+      cover: built.cover,
+      spine: built.spine,
+      shadow,
+    };
     scene.add(group);
-    pickables.push(mesh);
+    pickables.push(built.hit);
     return group;
   });
+  let activeBookId = null;
   const repaintCovers = () => {
     if (!alive) return;
     for (const book of shelfBooks) {
       const nextCover = coverTexture(book.userData.meta);
+      const nextFoil = coverFoilMaps(book.userData.meta);
       const nextSpine = spineTexture(book.userData.meta);
       book.userData.cover.map?.dispose();
+      book.userData.cover.metalnessMap?.dispose();
+      book.userData.cover.roughnessMap?.dispose();
       book.userData.spine.map?.dispose();
       book.userData.cover.map = nextCover;
+      book.userData.cover.metalnessMap = nextFoil.metalnessMap;
+      book.userData.cover.roughnessMap = nextFoil.roughnessMap;
       book.userData.spine.map = nextSpine;
       book.userData.cover.needsUpdate = true;
       book.userData.spine.needsUpdate = true;
@@ -683,29 +489,146 @@ export async function mountShelf(canvas, { onOpen, books }) {
   const pointer = new THREE.Vector2(-9, -9);
   let hovered = null;
 
-  const onMove = (event) => {
+  let lastTrailAt = 0;
+  let openTimer = 0;
+
+  const setPointerFromEvent = (event) => {
     pointer.x = (event.clientX / innerWidth) * 2 - 1;
     pointer.y = -(event.clientY / innerHeight) * 2 + 1;
   };
+
+  const onMove = (event) => {
+    pointerInside = true;
+    setPointerFromEvent(event);
+    const now = performance.now();
+    if (!folioOpen && now - lastTrailAt > 42) {
+      lastTrailAt = now;
+      sparkles.trail(event.clientX, event.clientY);
+    }
+  };
+
+  const onLeave = () => {
+    pointerInside = false;
+    pointer.set(-9, -9);
+  };
+  const describeHover = (node) => {
+    if (!node) return null;
+    if (node.userData.liveCat) return { type: "liveCat" };
+    if (node.userData.meta) {
+      return { type: "book", id: node.userData.meta.id, title: node.userData.meta.title };
+    }
+    if (node.userData.ornament) {
+      return { type: "ornament", kind: node.userData.kind };
+    }
+    return null;
+  };
   const ownerOf = (object) => {
     let node = object;
-    while (node && !node.userData.meta && !node.userData.ornament) node = node.parent;
+    while (node && !node.userData.meta && !node.userData.ornament && !node.userData.liveCat) node = node.parent;
     return node;
   };
   const pick = () => {
     raycaster.setFromCamera(pointer, camera);
     const hits = raycaster.intersectObjects(pickables, false);
-    return hits.length ? ownerOf(hits[0].object) : null;
+    for (const h of hits) {
+      const owner = ownerOf(h.object);
+      if (owner && owner.visible) return owner;
+    }
+    return null;
   };
-  const onClick = () => {
-    if (folioOpen) return;
-    const hit = pick();
-    if (!hit?.userData.meta) return;
+  const openBook = (meta) => {
+    recallCat(false);
+    activeBookId = meta.id;
     folioOpen = true;
-    camTarget.set(0, 0.78, 0);
-    onOpen(hit.userData.meta);
+    camTarget.set(0, 0.86, 0.25);
+  };
+  const onClick = (event) => {
+    if (folioOpen) return;
+    // 触屏首次轻点无前置 pointermove，实时更新射线坐标保证一戳即中
+    setPointerFromEvent(event);
+    const hit = pick();
+    if (!hit) {
+      sparkles.burst(event.clientX, event.clientY, 8, 0.65);
+      return;
+    }
+    if (hit.userData.liveCat) {
+      recallCat(true);
+      return;
+    }
+    if (hit.userData.ornament) {
+      const kind = hit.userData.kind;
+      if (kind === "cat") {
+        if (!liveCat.userData.isActive()) {
+          setCatOrnamentVisible(false);
+          sparkles.burst(event.clientX, event.clientY, 24, 1.1);
+          sound.catMeow(true);
+          liveCat.userData.wake(hit.position, {
+            onLandLower: () => {
+              sound.paper(0.06, 0.14);
+              const lp = projectScreen(liveCat.position);
+              sparkles.burst(lp.x, lp.y, 12, 0.7);
+            },
+          });
+        }
+        return;
+      }
+      if (kind === "rocket") {
+        if (!hit.userData.flight) {
+          hit.userData.flight = { age: 0, landedSound: false, sparkTimer: 0 };
+          sparkles.burst(event.clientX, event.clientY, 18, 0.95);
+          sound.clickOrnament("rocket");
+        }
+        return;
+      }
+      if (kind === "owl") {
+        if (!hit.userData.owlFlight) {
+          hit.userData.owlFlight = { age: 0, sparkTimer: 0 };
+          sparkles.burst(event.clientX, event.clientY, 14, 0.85);
+          sound.clickOrnament("owl");
+        }
+        return;
+      }
+      if (kind === "rose") {
+        if (!hit.userData.roseBloom) {
+          hit.userData.roseBloom = { age: 0, petalTimer: 0 };
+          rosePetals.burst(new THREE.Vector3(hit.position.x, hit.position.y + 0.24, hit.position.z), 18);
+          for (let k = 0; k < 14; k += 1) {
+            const a = (k / 14) * Math.PI * 2;
+            const sp = 24 + Math.random() * 52;
+            sparkles.emit(event.clientX, event.clientY, Math.cos(a) * sp, Math.sin(a) * sp + 22, 11 + Math.random() * 9, 0.85 + Math.random() * 0.45, true);
+          }
+          sound.clickOrnament("rose");
+        }
+        return;
+      }
+      hit.userData.hoverV += 4.2;
+      sparkles.burst(event.clientX, event.clientY, kind === "moon" ? 22 : 14, kind === "moon" ? 1.15 : 0.85);
+      if (kind === "lamp") {
+        lampOn = !lampOn;
+        sound.clickLamp(lampOn);
+        onLampToggle?.(lampOn);
+      } else if (kind === "moon") {
+        sound.clickMoon();
+        cometSky.launch(true);
+      } else {
+        sound.clickOrnament(kind);
+      }
+      return;
+    }
+    if (!hit.userData.meta) return;
+    sparkles.burst(event.clientX, event.clientY, 20, 1.05);
+    sound.openBook();
+    openBook(hit.userData.meta);
+    window.clearTimeout(openTimer);
+    openTimer = window.setTimeout(() => {
+      if (alive && folioOpen && activeBookId === hit.userData.meta.id) {
+        onOpen(hit.userData.meta);
+      }
+    }, 240);
   };
   window.addEventListener("pointermove", onMove);
+  document.addEventListener("pointerleave", onLeave);
+  window.addEventListener("blur", onLeave);
   canvas.addEventListener("click", onClick);
 
   fitView();
@@ -717,57 +640,317 @@ export async function mountShelf(canvas, { onOpen, books }) {
     const t = clock.getElapsedTime();
     const dt = Math.min(0.033, Math.max(0, t - previous));
     previous = t;
-    showerWait -= dt;
-    if (showerWait <= 0) {
-      showerLeft = Math.random() < 0.22 ? 2 : 1;
-      showerWait = 9 + Math.random() * 8;
-    }
-    if (showerLeft > 0 && Math.random() < dt * 1.4) {
-      const idle = meteors.find((mesh) => !mesh.visible);
-      if (idle) {
-        launchMeteor(idle, showerLeft === 1 && Math.random() < 0.18);
-        showerLeft -= 1;
-      }
-    }
-    for (const mesh of meteors) {
-      if (!mesh.visible) continue;
-      mesh.userData.age += dt;
-      mesh.position.addScaledVector(mesh.userData.dir, mesh.userData.speed * dt);
-      const appear = Math.min(1, mesh.userData.age / 0.18);
-      const fade = mesh.position.y < 2.2 ? Math.max(0, (mesh.position.y - 1.9) / 0.3) : 1;
-      mesh.material.opacity = appear * fade * 0.85;
-      if (mesh.position.y < 1.9 || mesh.userData.age > 3.2) mesh.visible = false;
-    }
+    const targetLamp = lampOn ? 1 : 0.04;
+    lampLevel += (targetLamp - lampLevel) * (1 - Math.exp(-5.5 * dt));
+    const flicker = 1 + Math.sin(t * 2.1) * 0.045 + Math.sin(t * 5.3) * 0.018;
+    lampGlow.intensity = 6.2 * lampLevel * flicker;
+    fill.intensity = (1.35 + 1.85 * lampLevel) * (lampOn ? flicker : 1);
+    key.intensity = 0.88 + 0.68 * lampLevel;
+    moonLight.intensity = 0.7 + (1 - lampLevel) * 0.55;
+
+    cometSky.update(t, dt);
+
     const hit = folioOpen ? null : pick();
-    if (hit !== hovered) hovered = hit;
-    document.body.style.cursor = hovered ? "pointer" : "default";
-    for (const book of shelfBooks) {
-      glide(book.userData, book === hovered ? 1 : 0, dt);
-      const lift = book.userData.hover;
-      const idle = 1 - Math.min(1, Math.abs(lift));
-      book.position.y = book.userData.baseY + Math.sin(t * 1.15 + book.userData.baseX) * 0.008 * idle + lift * 0.12;
-      book.position.z = book.userData.baseZ + lift * 0.16;
-      book.rotation.z = book.userData.baseX * -0.01 + lift * -0.035;
-      book.userData.glow.material.opacity = Math.max(0, lift) * 0.7;
+    if (hit !== hovered) {
+      hovered = hit;
+      if (hovered?.userData.meta) sound.hoverBook(hovered.userData.index);
+      onHoverChange?.(describeHover(hovered));
     }
+    if (!document.documentElement.classList.contains("has-custom-cursor")) {
+      document.body.style.cursor = hovered ? "pointer" : "default";
+    }
+    const cursorActive = pointerInside && !folioOpen;
+    if (cursorActive) {
+      cursorLightGoal.set(
+        THREE.MathUtils.clamp(pointer.x * 2.85, -2.9, 2.9),
+        THREE.MathUtils.clamp(look.y + pointer.y * 1.45, 0.12, 2.35),
+        hovered?.userData.ornament ? 0.42 : 0.78,
+      );
+      cursorLight.position.lerp(cursorLightGoal, 1 - Math.exp(-12 * dt));
+    }
+    const targetCursorLight = cursorActive ? (hovered ? 3.1 : 2.1) : 0;
+    cursorLight.intensity += (targetCursorLight - cursorLight.intensity) * (1 - Math.exp(-8 * dt));
+    for (const book of shelfBooks) {
+      const isSelected = folioOpen && book.userData.meta.id === activeBookId;
+      glide(book.userData, book === hovered ? 1 : 0, dt);
+      book.userData.pullV += ((isSelected ? 1 : 0) - book.userData.pull) * 42 * dt;
+      book.userData.pullV *= Math.exp(-12 * dt);
+      book.userData.pull += book.userData.pullV * dt;
+      const lift = book.userData.hover;
+      const pull = Math.max(0, book.userData.pull);
+      const idle = 1 - Math.min(1, Math.abs(lift) + pull);
+      book.position.x = THREE.MathUtils.lerp(book.userData.baseX, 0, pull * 0.45);
+      book.position.y = book.userData.baseY + Math.sin(t * 1.15 + book.userData.baseX) * 0.008 * idle + lift * 0.12 + pull * 0.18;
+      book.position.z = book.userData.baseZ + lift * 0.16 + pull * 1.15;
+      book.rotation.x = THREE.MathUtils.lerp(-0.045 + lift * 0.07, 0.02, pull);
+      book.rotation.y = THREE.MathUtils.lerp(0.045 * (1 - lift), -0.06, pull);
+      book.rotation.z = THREE.MathUtils.lerp(book.userData.baseTiltZ + lift * -0.035, 0, pull);
+      // 3D 前封板绕书脊铰链物理掀开
+      if (book.userData.frontPivot) {
+        book.userData.frontPivot.rotation.y = -2.05 * Math.min(1, pull * 1.05);
+      }
+      // 悬停时丝带书签向上探起并向右滑出微摆
+      if (book.userData.ribbon) {
+        const rb = book.userData.ribbonBase;
+        const markLift = Math.max(0, lift) * (1 - Math.min(1, pull));
+        book.userData.ribbon.position.x = rb.x + markLift * 0.17;
+        book.userData.ribbon.position.y = rb.y + markLift * 0.065;
+        book.userData.ribbon.rotation.z = -markLift * 0.24 + Math.sin(t * 4.4 + book.userData.index) * 0.045 * markLift;
+      }
+      // 阅读进度星钻徽记
+      const gem = book.userData.readGem;
+      if (gem) {
+        const targetGem = book.userData.read && !folioOpen ? 1 : 0;
+        book.userData.readScale += (targetGem - book.userData.readScale) * (1 - Math.exp(-8 * dt));
+        gem.visible = book.userData.readScale > 0.02;
+        if (gem.visible) {
+          const s = book.userData.readScale * (1 + Math.sin(t * 2.6 + book.userData.index) * 0.08);
+          gem.scale.set(s, s * 1.25, s);
+          gem.position.y = 0.086 + Math.sin(t * 2.2 + book.userData.index) * 0.008;
+          gem.rotation.y = t * 0.9 + book.userData.index;
+        }
+      }
+      book.userData.glow.material.opacity = Math.min(0.85, Math.max(0, lift) * 0.7 + pull * 0.65);
+      book.userData.shadow.material.opacity = 0.46 * Math.max(0, 1 - lift * 0.8 - pull * 0.95);
+    }
+    let rocketFlameIntensity = 0;
+    let roseGlowIntensity = 0;
     for (let i = 0; i < toys.length; i++) {
       const item = toys[i];
+      const owlFlight = item.userData.owlFlight;
+      if (owlFlight) {
+        owlFlight.age += dt;
+        owlFlight.sparkTimer += dt;
+        const age = owlFlight.age;
+        const bx = item.userData.baseX;
+        const by = item.userData.baseY;
+        const bz = item.userData.baseZ;
+        if (age < 0.35) {
+          // 1. 歪头卖萌 + 轻蹲蓄力
+          const p = age / 0.35;
+          item.position.set(bx, by - Math.sin(p * Math.PI) * 0.028, bz);
+          item.rotation.set(0, item.userData.baseRotY, Math.sin(p * Math.PI * 2) * 0.24);
+          item.scale.copy(item.userData.baseScale).multiply(new THREE.Vector3(1 + p * 0.05, 1 - p * 0.06, 1 + p * 0.05));
+        } else if (age < 2.15) {
+          // 2. 振翅盘旋飞一圈 + 飘落暖白星尘
+          const p = (age - 0.35) / 1.8;
+          const ease = p * p * (3 - 2 * p);
+          const loopAngle = ease * Math.PI * 2;
+          const liftArc = Math.sin(ease * Math.PI);
+          const flap = Math.sin(t * 24) * 0.022 * liftArc;
+          item.position.set(
+            bx + Math.sin(loopAngle) * 0.38,
+            by + liftArc * 0.62 + flap,
+            bz + (1 - Math.cos(loopAngle)) * 0.22,
+          );
+          item.rotation.set(
+            0.12 * liftArc,
+            item.userData.baseRotY + loopAngle,
+            -Math.cos(loopAngle) * 0.22 * liftArc,
+          );
+          item.scale.copy(item.userData.baseScale).multiplyScalar(1 + liftArc * 0.08);
+          if (item.userData.shadow) item.userData.shadow.material.opacity = 0.36 * (1 - liftArc * 0.85);
+          if (owlFlight.sparkTimer > 0.065) {
+            owlFlight.sparkTimer = 0;
+            const sp = projectScreen(item.position);
+            sparkles.emit(
+              sp.x + (Math.random() - 0.5) * 18,
+              sp.y + 8,
+              (Math.random() - 0.5) * 26,
+              -22 - Math.random() * 24,
+              10 + Math.random() * 8,
+              0.75 + Math.random() * 0.45,
+            );
+          }
+        } else if (age < 2.55) {
+          // 3. 轻盈回落缓冲
+          const p = (age - 2.15) / 0.4;
+          const bounce = Math.sin(p * Math.PI * 2) * Math.exp(-p * 4.5);
+          item.position.set(bx, by + Math.max(0, bounce) * 0.035, bz);
+          item.rotation.set(0, item.userData.baseRotY, bounce * 0.09);
+          item.scale.copy(item.userData.baseScale).multiply(new THREE.Vector3(1 - bounce * 0.06, 1 + bounce * 0.08, 1 - bounce * 0.06));
+          if (item.userData.shadow) item.userData.shadow.material.opacity = 0.36;
+        } else {
+          item.position.set(bx, by, bz);
+          item.rotation.set(0, item.userData.baseRotY, 0);
+          item.scale.copy(item.userData.baseScale);
+          if (item.userData.shadow) item.userData.shadow.material.opacity = 0.36;
+          item.userData.owlFlight = null;
+        }
+        continue;
+      }
+
+      const roseBloom = item.userData.roseBloom;
+      if (roseBloom) {
+        roseBloom.age += dt;
+        roseBloom.petalTimer += dt;
+        const p = Math.min(1, roseBloom.age / 2.4);
+        const bx = item.userData.baseX;
+        const by = item.userData.baseY;
+        const bz = item.userData.baseZ;
+        const swell = Math.sin(p * Math.PI);
+        const spin = p * p * (3 - 2 * p) * Math.PI * 2;
+        item.position.set(bx, by + swell * 0.13, bz + swell * 0.08);
+        item.rotation.set(0, item.userData.baseRotY + spin, Math.sin(p * Math.PI * 2) * 0.1);
+        item.scale.copy(item.userData.baseScale).multiplyScalar(1 + swell * 0.14);
+        roseGlowIntensity = swell * 4.8;
+        roseLight.position.set(item.position.x, item.position.y + 0.18, item.position.z + 0.16);
+        if (item.userData.shadow) item.userData.shadow.material.opacity = 0.36 * (1 - swell * 0.55);
+        if (p < 0.85 && roseBloom.petalTimer > 0.11) {
+          roseBloom.petalTimer = 0;
+          const bloomPos = new THREE.Vector3(item.position.x, item.position.y + 0.24, item.position.z);
+          rosePetals.spawnOne(bloomPos, 0.72);
+          const sp = projectScreen(bloomPos);
+          sparkles.emit(
+            sp.x + (Math.random() - 0.5) * 24,
+            sp.y + (Math.random() - 0.5) * 14,
+            (Math.random() - 0.5) * 32,
+            16 + Math.random() * 20,
+            10 + Math.random() * 8,
+            0.85 + Math.random() * 0.45,
+            true,
+          );
+        }
+        if (p >= 1) {
+          item.position.set(bx, by, bz);
+          item.rotation.set(0, item.userData.baseRotY, 0);
+          item.scale.copy(item.userData.baseScale);
+          if (item.userData.shadow) item.userData.shadow.material.opacity = 0.36;
+          item.userData.roseBloom = null;
+        }
+        continue;
+      }
+
+      const flight = item.userData.flight;
+      if (flight) {
+        flight.age += dt;
+        flight.sparkTimer += dt;
+        const age = flight.age;
+        const bx = item.userData.baseX;
+        const by = item.userData.baseY;
+        const bz = item.userData.baseZ;
+        const emitNozzle = (spread = 28, speedY = -110, size = 12) => {
+          nozzleWorld.set(item.position.x, item.position.y + 0.04, item.position.z);
+          nozzleWorld.project(camera);
+          if (nozzleWorld.x >= -1.15 && nozzleWorld.x <= 1.15 && nozzleWorld.y >= -1.15 && nozzleWorld.y <= 1.15) {
+            const sx = (nozzleWorld.x * 0.5 + 0.5) * innerWidth;
+            const sy = (-nozzleWorld.y * 0.5 + 0.5) * innerHeight;
+            sparkles.emit(
+              sx + (Math.random() - 0.5) * 10,
+              sy + 6,
+              (Math.random() - 0.5) * spread,
+              speedY - Math.random() * 45,
+              size + Math.random() * 8,
+              0.38 + Math.random() * 0.28,
+            );
+          }
+        };
+
+        if (age < 0.45) {
+          // 1. 点火蓄力抖动
+          const p = age / 0.45;
+          const shake = Math.sin(t * 72) * 0.022 * p;
+          item.position.set(bx + shake, by - 0.025 * p, bz + Math.cos(t * 64) * 0.012 * p);
+          item.rotation.set(0, item.userData.baseRotY, shake * 2.2);
+          item.scale.copy(item.userData.baseScale).multiply(new THREE.Vector3(1 + 0.06 * p, 1 - 0.08 * p, 1 + 0.06 * p));
+          rocketFlameIntensity = 4.5 * p * (0.85 + Math.sin(t * 50) * 0.15);
+          if (flight.sparkTimer > 0.025) {
+            flight.sparkTimer = 0;
+            emitNozzle(70, -60, 11);
+          }
+        } else if (age < 1.55) {
+          // 2. 呼啸加速升空冲出画面
+          const p = (age - 0.45) / 1.1;
+          const climb = Math.pow(p, 2.15);
+          const arcX = Math.sin(p * Math.PI * 0.85) * 0.36;
+          item.position.set(bx + arcX, by + climb * 4.6, bz + p * 0.25);
+          item.rotation.set(-0.08 * p, item.userData.baseRotY + p * Math.PI * 1.4, -0.16 * Math.sin(p * Math.PI));
+          item.scale.copy(item.userData.baseScale).multiply(new THREE.Vector3(0.95, 1.12, 0.95));
+          rocketFlameIntensity = Math.max(0, (1 - p * 0.7) * 6.5);
+          if (item.userData.shadow) item.userData.shadow.material.opacity = 0.36 * Math.max(0, 1 - p * 3.2);
+          if (flight.sparkTimer > 0.018) {
+            flight.sparkTimer = 0;
+            emitNozzle(42, -145, 14);
+          }
+        } else if (age < 3.15) {
+          // 3. 高空回返 & 反推减速精准降落
+          const p = (age - 1.55) / 1.6;
+          const descend = Math.pow(1 - p, 2.75);
+          const swayX = Math.sin((1 - p) * Math.PI) * -0.22;
+          item.position.set(bx + swayX, by + descend * 4.6, bz + descend * 0.18);
+          item.rotation.set(0, item.userData.baseRotY + descend * Math.PI * 0.8, 0.12 * Math.sin((1 - p) * Math.PI));
+          item.scale.copy(item.userData.baseScale);
+          if (item.userData.shadow) item.userData.shadow.material.opacity = 0.36 * Math.pow(p, 2.4);
+          if (p > 0.55) {
+            const burn = (p - 0.55) / 0.45;
+            rocketFlameIntensity = Math.sin(burn * Math.PI) * 5.2;
+            if (flight.sparkTimer > 0.024) {
+              flight.sparkTimer = 0;
+              emitNozzle(65, -95, 11);
+            }
+          }
+        } else if (age < 3.62) {
+          // 4. 落地微弹缓冲
+          const p = (age - 3.15) / 0.47;
+          if (!flight.landedSound) {
+            flight.landedSound = true;
+            sound.rocketLand();
+            for (let k = 0; k < 10; k += 1) emitNozzle(110, -25, 10);
+          }
+          const bounce = Math.sin(p * Math.PI * 2) * Math.exp(-p * 4.5);
+          item.position.set(bx, by + Math.max(0, bounce) * 0.045, bz);
+          item.rotation.set(0, item.userData.baseRotY, bounce * 0.06);
+          item.scale.copy(item.userData.baseScale).multiply(new THREE.Vector3(1 - bounce * 0.08, 1 + bounce * 0.11, 1 - bounce * 0.08));
+          if (item.userData.shadow) item.userData.shadow.material.opacity = 0.36;
+        } else {
+          item.position.set(bx, by, bz);
+          item.rotation.set(0, item.userData.baseRotY, 0);
+          item.scale.copy(item.userData.baseScale);
+          if (item.userData.shadow) item.userData.shadow.material.opacity = 0.36;
+          item.userData.flight = null;
+        }
+        rocketLight.position.set(item.position.x, item.position.y - 0.05, item.position.z + 0.14);
+        continue;
+      }
+
       glide(item.userData, item === hovered ? 1 : 0, dt);
       const lift = item.userData.hover;
       const idle = 1 - Math.min(1, Math.abs(lift));
+      item.position.x = item.userData.baseX;
       item.position.y = item.userData.baseY + Math.sin(t * 1.05 + i) * 0.008 * idle + lift * 0.11;
       item.position.z = item.userData.baseZ + lift * 0.16;
+      item.rotation.x = 0;
       item.rotation.y = item.userData.baseRotY + lift * 0.08;
       item.rotation.z = lift * -0.045;
       item.scale.copy(item.userData.baseScale).multiplyScalar(1 + lift * 0.06);
+      if (item.userData.shadow) item.userData.shadow.material.opacity = 0.36 * (1 - lift * 0.75);
     }
-    starField.material.opacity = 0.28 + Math.sin(t * 1.7) * 0.08;
+    rocketLight.intensity += (rocketFlameIntensity - rocketLight.intensity) * (1 - Math.exp(-16 * dt));
+    roseLight.intensity += (roseGlowIntensity - roseLight.intensity) * (1 - Math.exp(-8 * dt));
+    rosePetals.update(t, dt);
+    liveCat.userData.update(t, dt, pointerInside ? pointer : null, hovered);
+    nightSky.update(t, lampLevel);
     dust.rotation.y = t * 0.04;
-    goal.set(pointer.x * 0.1, folioOpen ? home.y - 0.08 : home.y + pointer.y * 0.03, folioOpen ? home.z * 0.88 : home.z);
-    camera.position.lerp(goal, 1 - Math.exp(-2.6 * dt));
+    goal.set(pointer.x * 0.1, folioOpen ? home.y - 0.06 : home.y + pointer.y * 0.03, folioOpen ? home.z * 0.84 : home.z);
+    camera.position.lerp(goal, 1 - Math.exp(-2.8 * dt));
     camera.lookAt(camTarget);
+
+    renderer.autoClear = false;
+    renderer.clear();
     renderer.render(scene, camera);
+    renderer.clearDepth();
+    sparkles.render(t);
   };
+  const onVisibility = () => {
+    if (!alive) return;
+    if (document.hidden) {
+      renderer.setAnimationLoop(null);
+    } else {
+      previous = clock.getElapsedTime();
+      renderer.setAnimationLoop(frame);
+    }
+  };
+  document.addEventListener("visibilitychange", onVisibility);
   renderer.setAnimationLoop(frame);
 
   return {
@@ -779,17 +962,67 @@ export async function mountShelf(canvas, { onOpen, books }) {
       }
       repaintCovers();
     },
+    selectBook(id) {
+      window.clearTimeout(openTimer);
+      if (!id) {
+        if (folioOpen) sound.closeBook();
+        activeBookId = null;
+        folioOpen = false;
+        camTarget.set(0, look.y, 0);
+        return;
+      }
+      if (folioOpen && activeBookId && activeBookId !== id) {
+        sound.turnPage();
+      }
+      activeBookId = id;
+      folioOpen = true;
+      camTarget.set(0, 0.86, 0.25);
+    },
+    setReadBooks(ids) {
+      const set = new Set(ids);
+      for (const group of shelfBooks) {
+        group.userData.read = set.has(group.userData.meta.id);
+      }
+    },
+    setSoundEnabled(on) {
+      sound.setEnabled(on);
+      if (on) sound.chime(79, { volume: 0.07, decay: 0.5 });
+    },
+    celebrate() {
+      sound.celebrate();
+      cometSky.shower(6);
+      sparkles.burst(innerWidth * 0.5, innerHeight * 0.42, 42, 1.5);
+    },
+    toggleLamp() {
+      lampOn = !lampOn;
+      sound.clickLamp(lampOn);
+      onLampToggle?.(lampOn);
+      return lampOn;
+    },
     close() {
+      window.clearTimeout(openTimer);
+      if (folioOpen) sound.closeBook();
+      activeBookId = null;
       folioOpen = false;
       camTarget.set(0, look.y, 0);
     },
     dispose() {
       alive = false;
+      window.clearTimeout(openTimer);
       renderer.setAnimationLoop(null);
+      document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener("blur", onLeave);
       window.removeEventListener("resize", resize);
       window.removeEventListener("resize", fitView);
       canvas.removeEventListener("click", onClick);
+      nightSky.dispose();
+      cometSky.dispose();
+      rosePetals.dispose();
+      furniture.dispose();
+      sparkles.dispose();
+      sound.dispose();
       renderer.dispose();
     },
   };
