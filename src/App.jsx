@@ -4,7 +4,83 @@ import ShelfCanvas from "./components/ShelfCanvas.jsx";
 import ShelfCursor from "./components/ShelfCursor.jsx";
 import { locales, readLocale, storeLocale } from "./data/content.js";
 
+function detectWeChat() {
+  if (typeof navigator === "undefined") return { isWeChat: false, isIOS: false };
+  const ua = navigator.userAgent || "";
+  const forced = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("wx") === "1";
+  return {
+    isWeChat: forced || /MicroMessenger/i.test(ua),
+    isIOS: /iphone|ipad|ipod/i.test(ua),
+  };
+}
+
+function WeChatGate({ copy, isIOS }) {
+  const [copied, setCopied] = useState(false);
+
+  const copyUrl = async () => {
+    const url = window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      const input = document.createElement("input");
+      input.value = url;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand("copy");
+      document.body.removeChild(input);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div id="wx-gate" role="dialog" aria-modal="true" aria-label={copy.ui.wxTitle}>
+      <svg className="wx-arrow" width="84" height="84" viewBox="0 0 84 84" fill="none" aria-hidden="true">
+        <path
+          d="M16 70 C 26 42, 46 28, 68 14"
+          stroke="#f2d488"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeDasharray="5 5"
+        />
+        <path
+          d="M54 12 L70 13 L66 28"
+          stroke="#fae19c"
+          strokeWidth="2.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      <div className="wx-card">
+        <img className="wx-avatar" src="/logo.jpg" alt="Amico" />
+        <div className="eyebrow">AMICO · ARCHIVE</div>
+        <h2>{copy.ui.wxTitle}</h2>
+        <p className="wx-body">{copy.ui.wxBody}</p>
+        <ol className="wx-steps">
+          <li><span>1</span>{copy.ui.wxStep1}</li>
+          <li><span>2</span>{isIOS ? copy.ui.wxStep2Ios : copy.ui.wxStep2Android}</li>
+        </ol>
+        <button type="button" className={`wx-copy ${copied ? "copied" : ""}`} onClick={copyUrl}>
+          {copied ? `✓ ${copy.ui.wxCopied}` : copy.ui.wxCopyLink}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
+  const [wxEnv] = useState(detectWeChat);
+  if (wxEnv.isWeChat) {
+    const isZh = typeof navigator !== "undefined" && /^zh/i.test(navigator.language || "");
+    const wxLocale = isZh ? "zh" : readLocale();
+    return <WeChatGate copy={locales[wxLocale]} isIOS={wxEnv.isIOS} />;
+  }
+  return <ShelfApp />;
+}
+
+function ShelfApp() {
   const [locale, setLocale] = useState(readLocale);
   const [bookId, setBookId] = useState(null);
   const [lampOn, setLampOn] = useState(true);
