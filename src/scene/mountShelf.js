@@ -33,7 +33,7 @@ function glide(data, target, dt) {
   data.hover += data.hoverV * dt;
 }
 
-export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, onProgress, books }) {
+export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, onProgress, onContextLost, books }) {
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: true,
@@ -71,18 +71,28 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
   const BOOK_H = 1.28;
   const gap = 1.08;
 
+  function viewportSize() {
+    const w = canvas.clientWidth || window.innerWidth || 0;
+    const h = canvas.clientHeight || window.innerHeight || 0;
+    return { w, h };
+  }
   function resize() {
-    const dpr = Math.min(devicePixelRatio, 1.5);
+    const { w, h } = viewportSize();
+    if (w < 2 || h < 2) return false;
+    const dpr = Math.min(devicePixelRatio || 1, 1.5);
     renderer.setPixelRatio(dpr);
-    renderer.setSize(innerWidth, innerHeight);
-    sparkles.resize(innerWidth, innerHeight, dpr);
+    renderer.setSize(w, h, false);
+    sparkles.resize(w, h, dpr);
     nightSky.setDpr(dpr);
     cometSky.setDpr(dpr);
-    camera.aspect = innerWidth / innerHeight;
+    camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    return true;
   }
   const look = { y: 1.02 };
   function fitView() {
+    const { w, h } = viewportSize();
+    if (w < 2 || h < 2 || !Number.isFinite(camera.aspect) || camera.aspect <= 0) return;
     const span = (books.length - 1) * gap + BOOK_W + 0.9;
     const vFov = THREE.MathUtils.degToRad(camera.fov);
     const tanV = Math.tan(vFov / 2);
@@ -93,19 +103,22 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
       const hFov = 2 * Math.atan(tanV * Math.max(camera.aspect, 0.42));
       const distW = (viewSpan / 2) / Math.tan(hFov / 2);
       const distH = (2.38 - look.y) / (0.56 * tanV);
-      home.z = Math.max(distW, distH, 5.4);
+      const nextZ = Math.max(distW, distH, 5.4);
+      if (Number.isFinite(nextZ)) home.z = nextZ;
       home.y = look.y + 0.08;
       const visibleHalfW = home.z * Math.tan(hFov / 2);
-      maxPanX = Math.max(0, span / 2 - visibleHalfW + 0.35);
-      panX = THREE.MathUtils.clamp(panX, -maxPanX, maxPanX);
+      const nextMaxPan = Math.max(0, span / 2 - visibleHalfW + 0.35);
+      maxPanX = Number.isFinite(nextMaxPan) ? nextMaxPan : 0;
+      panX = THREE.MathUtils.clamp(Number.isFinite(panX) ? panX : 0, -maxPanX, maxPanX);
     } else {
       const hFov = 2 * Math.atan(tanV * Math.max(camera.aspect, 0.75));
       const distW = (span / 2) / Math.tan(hFov / 2);
       // 顶上的摆件要留在页眉下面，宽屏与手机横屏都要完整收进上下两层。
       const toyTop = 2.35;
-      const compactLandscape = innerHeight <= 520 && innerWidth > innerHeight;
+      const compactLandscape = h <= 520 && w > h;
       const distH = (toyTop - look.y) / ((compactLandscape ? 0.54 : 0.58) * tanV);
-      home.z = Math.max(distW, distH, 4.4);
+      const nextZ = Math.max(distW, distH, 4.4);
+      if (Number.isFinite(nextZ)) home.z = nextZ;
       home.y = look.y + 0.06;
       maxPanX = 0;
       panX = 0;
@@ -113,9 +126,24 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
     }
     if (!folioOpen) camTarget.set(panX, look.y, 0);
   }
+  const resizeTimers = [];
+  const syncViewport = () => {
+    if (!alive) return;
+    if (resize()) fitView();
+  };
+  const scheduleViewportSync = () => {
+    syncViewport();
+    for (const delay of [120, 360]) {
+      const id = window.setTimeout(syncViewport, delay);
+      resizeTimers.push(id);
+    }
+  };
   resize();
-  window.addEventListener("resize", resize);
-  window.addEventListener("resize", fitView);
+  window.addEventListener("resize", syncViewport);
+  window.addEventListener("orientationchange", scheduleViewportSync);
+  document.addEventListener("fullscreenchange", scheduleViewportSync);
+  document.addEventListener("webkitfullscreenchange", scheduleViewportSync);
+  window.visualViewport?.addEventListener("resize", syncViewport);
 
   scene.add(new THREE.AmbientLight("#9eb0e4", 0.22));
   const moonLight = new THREE.DirectionalLight("#d5e4ff", 0.7);
@@ -1072,9 +1100,16 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
     }
     const targetCamX = folioOpen ? 0 : (maxPanX > 0.05 ? panX : pointer.x * 0.1);
     const targetLookX = folioOpen ? 0 : panX;
+    if (!Number.isFinite(camTarget.x) || !Number.isFinite(camTarget.y) || !Number.isFinite(camTarget.z)) {
+      camTarget.set(targetLookX, look.y, 0);
+    }
     camTarget.x += (targetLookX - camTarget.x) * (1 - Math.exp(-8 * dt));
     goal.set(targetCamX, folioOpen ? home.y - 0.06 : home.y + (maxPanX > 0.05 ? 0 : pointer.y * 0.03), folioOpen ? home.z * 0.84 : home.z);
-    camera.position.lerp(goal, 1 - Math.exp(-3.2 * dt));
+    if (!Number.isFinite(camera.position.x) || !Number.isFinite(camera.position.y) || !Number.isFinite(camera.position.z)) {
+      camera.position.copy(goal);
+    } else {
+      camera.position.lerp(goal, 1 - Math.exp(-3.2 * dt));
+    }
     camera.lookAt(camTarget);
 
     renderer.autoClear = false;
@@ -1083,11 +1118,37 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
     renderer.clearDepth();
     sparkles.render(t);
   };
+  let contextLostTimer = 0;
+  const onContextLostEvent = (event) => {
+    event.preventDefault();
+    renderer.setAnimationLoop(null);
+    window.clearTimeout(contextLostTimer);
+    contextLostTimer = window.setTimeout(() => {
+      if (alive) onContextLost?.();
+    }, 1200);
+  };
+  const onContextRestoredEvent = () => {
+    window.clearTimeout(contextLostTimer);
+    if (!alive) return;
+    try {
+      const nextPmrem = new THREE.PMREMGenerator(renderer);
+      scene.environment = nextPmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+      nextPmrem.dispose();
+    } catch {
+      // ignore environment rebuild failures
+    }
+    scheduleViewportSync();
+    previous = clock.getElapsedTime();
+    renderer.setAnimationLoop(frame);
+  };
+  canvas.addEventListener("webglcontextlost", onContextLostEvent, false);
+  canvas.addEventListener("webglcontextrestored", onContextRestoredEvent, false);
   const onVisibility = () => {
     if (!alive) return;
     if (document.hidden) {
       renderer.setAnimationLoop(null);
     } else {
+      scheduleViewportSync();
       previous = clock.getElapsedTime();
       renderer.setAnimationLoop(frame);
     }
@@ -1151,7 +1212,11 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
     dispose() {
       alive = false;
       window.clearTimeout(openTimer);
+      window.clearTimeout(contextLostTimer);
+      for (const id of resizeTimers) window.clearTimeout(id);
       renderer.setAnimationLoop(null);
+      canvas.removeEventListener("webglcontextlost", onContextLostEvent, false);
+      canvas.removeEventListener("webglcontextrestored", onContextRestoredEvent, false);
       document.removeEventListener("visibilitychange", onVisibility);
       canvas.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointermove", onMove);
@@ -1159,8 +1224,11 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
       window.removeEventListener("pointercancel", onPointerUp);
       document.removeEventListener("pointerleave", onLeave);
       window.removeEventListener("blur", onLeave);
-      window.removeEventListener("resize", resize);
-      window.removeEventListener("resize", fitView);
+      window.removeEventListener("resize", syncViewport);
+      window.removeEventListener("orientationchange", scheduleViewportSync);
+      document.removeEventListener("fullscreenchange", scheduleViewportSync);
+      document.removeEventListener("webkitfullscreenchange", scheduleViewportSync);
+      window.visualViewport?.removeEventListener("resize", syncViewport);
       canvas.removeEventListener("click", onClick);
       nightSky.dispose();
       cometSky.dispose();

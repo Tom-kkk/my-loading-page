@@ -176,7 +176,7 @@ function ShelfApp() {
   }, []);
 
   const toggleFullscreen = () => {
-    const el = document.documentElement;
+    const el = document.getElementById("root") || document.documentElement;
     if (document.fullscreenElement || document.webkitFullscreenElement) {
       (document.exitFullscreen || document.webkitExitFullscreen)?.call(document)?.catch?.(() => {});
     } else {
