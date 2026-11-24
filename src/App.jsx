@@ -88,6 +88,7 @@ function ShelfApp() {
   const [readIds, setReadIds] = useState([]);
   const [celebrationToast, setCelebrationToast] = useState(false);
   const [dismissRotate, setDismissRotate] = useState(false);
+  const [swipeHint, setSwipeHint] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [canFullscreen, setCanFullscreen] = useState(false);
   const [hover, setHover] = useState(null);
@@ -183,6 +184,22 @@ function ShelfApp() {
     }
   };
 
+  useEffect(() => {
+    if (!swipeHint) return undefined;
+    const hide = () => setSwipeHint(false);
+    const timer = window.setTimeout(hide, 3600);
+    window.addEventListener("pointerdown", hide, { once: true });
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("pointerdown", hide);
+    };
+  }, [swipeHint]);
+
+  const handleDismissRotate = () => {
+    setDismissRotate(true);
+    setSwipeHint(true);
+  };
+
   const toggleSound = () => {
     const next = !soundOn;
     setSoundOn(next);
@@ -245,6 +262,9 @@ function ShelfApp() {
       <div className={`celebrate-toast ${celebrationToast ? "show" : ""}`} role="status" aria-live="polite">
         ✦ {copy.ui.allReadToast}
       </div>
+      <div className={`swipe-hint ${swipeHint && !book ? "show" : ""}`} aria-hidden={!swipeHint}>
+        {rotateCopy.portraitSwipeHint}
+      </div>
       <footer>
         <a href={`mailto:${copy.site.email}`}>{copy.site.email}</a>
         {" · "}
@@ -269,7 +289,7 @@ function ShelfApp() {
             <div className="eyebrow">AMICO · ARCHIVE</div>
             <h2>{rotateCopy.rotateTitle}</h2>
             <p>{rotateCopy.rotateBody}</p>
-            <button type="button" className="rotate-skip" onClick={() => setDismissRotate(true)}>
+            <button type="button" className="rotate-skip" onClick={handleDismissRotate}>
               {rotateCopy.rotateSkip}
             </button>
           </div>

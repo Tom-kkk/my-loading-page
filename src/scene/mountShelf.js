@@ -64,6 +64,9 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
   const camTarget = new THREE.Vector3(0, 1.02, 0);
   let folioOpen = false;
   const home = { y: 1.12, z: 6.4 };
+  let panX = 0;
+  let panV = 0;
+  let maxPanX = 0;
   const BOOK_W = 0.92;
   const BOOK_H = 1.28;
   const gap = 1.08;
@@ -83,15 +86,32 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
     const span = (books.length - 1) * gap + BOOK_W + 0.9;
     const vFov = THREE.MathUtils.degToRad(camera.fov);
     const tanV = Math.tan(vFov / 2);
-    const hFov = 2 * Math.atan(tanV * Math.max(camera.aspect, 0.75));
-    const distW = (span / 2) / Math.tan(hFov / 2);
-    // 顶上的摆件要留在页眉下面，宽屏与手机横屏都要完整收进上下两层。
-    const toyTop = 2.35;
-    const compactLandscape = innerHeight <= 520 && innerWidth > innerHeight;
-    const distH = (toyTop - look.y) / ((compactLandscape ? 0.54 : 0.58) * tanV);
-    home.z = Math.max(distW, distH, 4.4);
-    home.y = look.y + 0.06;
-    if (!folioOpen) camTarget.set(0, look.y, 0);
+    const portrait = camera.aspect < 0.85;
+    if (portrait) {
+      // 仅竖屏模式：按约 2 本书宽近景取景，支持单指左右滑动浏览完整书架与两侧书档
+      const viewSpan = 2.55;
+      const hFov = 2 * Math.atan(tanV * Math.max(camera.aspect, 0.42));
+      const distW = (viewSpan / 2) / Math.tan(hFov / 2);
+      const distH = (2.38 - look.y) / (0.56 * tanV);
+      home.z = Math.max(distW, distH, 5.4);
+      home.y = look.y + 0.08;
+      const visibleHalfW = home.z * Math.tan(hFov / 2);
+      maxPanX = Math.max(0, span / 2 - visibleHalfW + 0.35);
+      panX = THREE.MathUtils.clamp(panX, -maxPanX, maxPanX);
+    } else {
+      const hFov = 2 * Math.atan(tanV * Math.max(camera.aspect, 0.75));
+      const distW = (span / 2) / Math.tan(hFov / 2);
+      // 顶上的摆件要留在页眉下面，宽屏与手机横屏都要完整收进上下两层。
+      const toyTop = 2.35;
+      const compactLandscape = innerHeight <= 520 && innerWidth > innerHeight;
+      const distH = (toyTop - look.y) / ((compactLandscape ? 0.54 : 0.58) * tanV);
+      home.z = Math.max(distW, distH, 4.4);
+      home.y = look.y + 0.06;
+      maxPanX = 0;
+      panX = 0;
+      panV = 0;
+    }
+    if (!folioOpen) camTarget.set(panX, look.y, 0);
   }
   resize();
   window.addEventListener("resize", resize);
@@ -557,15 +577,43 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
 
   let lastTrailAt = 0;
   let openTimer = 0;
+  const drag = { active: false, pointerId: null, startX: 0, startY: 0, lastX: 0, moved: false };
+  let suppressClick = false;
 
   const setPointerFromEvent = (event) => {
     pointer.x = (event.clientX / innerWidth) * 2 - 1;
     pointer.y = -(event.clientY / innerHeight) * 2 + 1;
   };
 
+  const onPointerDown = (event) => {
+    if (folioOpen) return;
+    setPointerFromEvent(event);
+    pointerInside = true;
+    drag.active = true;
+    drag.pointerId = event.pointerId;
+    drag.startX = event.clientX;
+    drag.startY = event.clientY;
+    drag.lastX = event.clientX;
+    drag.moved = false;
+    panV = 0;
+  };
+
   const onMove = (event) => {
     pointerInside = true;
     setPointerFromEvent(event);
+    if (drag.active && event.pointerId === drag.pointerId && !folioOpen && maxPanX > 0.05) {
+      const dxTotal = event.clientX - drag.startX;
+      const dyTotal = event.clientY - drag.startY;
+      if (Math.hypot(dxTotal, dyTotal) > 8) drag.moved = true;
+      if (drag.moved) {
+        const dx = event.clientX - drag.lastX;
+        const worldPerPx = (home.z * 0.62) / Math.max(innerWidth, 320);
+        const shift = -dx * worldPerPx;
+        panX = THREE.MathUtils.clamp(panX + shift, -maxPanX, maxPanX);
+        panV = shift * 36;
+      }
+      drag.lastX = event.clientX;
+    }
     const now = performance.now();
     if (!folioOpen && now - lastTrailAt > 42) {
       lastTrailAt = now;
@@ -573,8 +621,16 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
     }
   };
 
+  const onPointerUp = (event) => {
+    if (!drag.active || event.pointerId !== drag.pointerId) return;
+    if (drag.moved) suppressClick = true;
+    drag.active = false;
+    drag.pointerId = null;
+  };
+
   const onLeave = () => {
     pointerInside = false;
+    drag.active = false;
     pointer.set(-9, -9);
   };
   const describeHover = (node) => {
@@ -609,6 +665,10 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
     camTarget.set(0, 0.86, 0.25);
   };
   const onClick = (event) => {
+    if (suppressClick) {
+      suppressClick = false;
+      return;
+    }
     if (folioOpen) return;
     // 触屏首次轻点无前置 pointermove，实时更新射线坐标保证一戳即中
     setPointerFromEvent(event);
@@ -692,7 +752,10 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
       }
     }, 240);
   };
+  canvas.addEventListener("pointerdown", onPointerDown);
   window.addEventListener("pointermove", onMove);
+  window.addEventListener("pointerup", onPointerUp);
+  window.addEventListener("pointercancel", onPointerUp);
   document.addEventListener("pointerleave", onLeave);
   window.addEventListener("blur", onLeave);
   canvas.addEventListener("click", onClick);
@@ -1001,8 +1064,17 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
     liveCat.userData.update(t, dt, pointerInside ? pointer : null, hovered);
     nightSky.update(t, lampLevel);
     dust.rotation.y = t * 0.04;
-    goal.set(pointer.x * 0.1, folioOpen ? home.y - 0.06 : home.y + pointer.y * 0.03, folioOpen ? home.z * 0.84 : home.z);
-    camera.position.lerp(goal, 1 - Math.exp(-2.8 * dt));
+    if (!drag.active && maxPanX > 0.05 && !folioOpen) {
+      panX += panV * dt;
+      panV *= Math.exp(-6.5 * dt);
+      if (panX < -maxPanX) { panX = -maxPanX; panV = 0; }
+      else if (panX > maxPanX) { panX = maxPanX; panV = 0; }
+    }
+    const targetCamX = folioOpen ? 0 : (maxPanX > 0.05 ? panX : pointer.x * 0.1);
+    const targetLookX = folioOpen ? 0 : panX;
+    camTarget.x += (targetLookX - camTarget.x) * (1 - Math.exp(-8 * dt));
+    goal.set(targetCamX, folioOpen ? home.y - 0.06 : home.y + (maxPanX > 0.05 ? 0 : pointer.y * 0.03), folioOpen ? home.z * 0.84 : home.z);
+    camera.position.lerp(goal, 1 - Math.exp(-3.2 * dt));
     camera.lookAt(camTarget);
 
     renderer.autoClear = false;
@@ -1074,14 +1146,17 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
       if (folioOpen) sound.closeBook();
       activeBookId = null;
       folioOpen = false;
-      camTarget.set(0, look.y, 0);
+      camTarget.set(panX, look.y, 0);
     },
     dispose() {
       alive = false;
       window.clearTimeout(openTimer);
       renderer.setAnimationLoop(null);
       document.removeEventListener("visibilitychange", onVisibility);
+      canvas.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
       document.removeEventListener("pointerleave", onLeave);
       window.removeEventListener("blur", onLeave);
       window.removeEventListener("resize", resize);

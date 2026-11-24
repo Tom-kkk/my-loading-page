@@ -70,8 +70,8 @@ header p { margin: 6px 0 0; font-size: 14px; letter-spacing: 0.08em; color: #ffe
 .sound-btn.on .sound-bars i:nth-child(1) { height: 6px; }
 .sound-btn.on .sound-bars i:nth-child(2) { height: 11px; }
 .sound-btn.on .sound-bars i:nth-child(3) { height: 8px; }
-.celebrate-toast {
-  position: fixed; left: 50%; bottom: 56px; z-index: 6; pointer-events: none;
+.celebrate-toast, .swipe-hint {
+  position: fixed; left: 50%; bottom: calc(56px + env(safe-area-inset-bottom, 0px)); z-index: 6; pointer-events: none;
   transform: translate(-50%, 14px); opacity: 0;
   padding: 8px 18px; border-radius: 999px;
   background: rgba(11, 16, 36, 0.84); color: #fff2cc;
@@ -81,7 +81,7 @@ header p { margin: 6px 0 0; font-size: 14px; letter-spacing: 0.08em; color: #ffe
   backdrop-filter: blur(10px);
   transition: opacity 420ms ease, transform 420ms var(--spring);
 }
-.celebrate-toast.show { opacity: 1; transform: translate(-50%, 0); }
+.celebrate-toast.show, .swipe-hint.show { opacity: 1; transform: translate(-50%, 0); }
 .lamp-dot {
   width: 8px; height: 8px; border-radius: 50%;
   background: #8aa4d6;
