@@ -1,3 +1,8 @@
+@font-face { font-family: "Fredoka"; font-weight: 500; font-display: swap; size-adjust: 98%; src: url("/story-assets/public/fonts/fredoka-500.43219fb92dc3f7c3.woff2") format("woff2"); }
+@font-face { font-family: "Fredoka"; font-weight: 600; font-display: swap; size-adjust: 98%; src: url("/story-assets/public/fonts/fredoka-600.ac77fa0b85fb10eb.woff2") format("woff2"); }
+@font-face { font-family: "Baloo 2"; font-weight: 700; font-display: swap; size-adjust: 96%; src: url("/story-assets/public/fonts/baloo-2-800.97203f257be192fd.woff2") format("woff2"); }
+@font-face { font-family: "Andika"; font-weight: 400; font-display: swap; size-adjust: 99%; src: url("/story-assets/public/fonts/andika-400.dfe21cd8b12ff215.woff2") format("woff2"); }
+
 :root {
   --midnight: #10162e;
   --navy: #1d2649;
@@ -6,9 +11,9 @@
   --ink: #2c2a3e;
   --honey: #d9a45c;
   --gold: #e6bd66;
-  --ui: "Segoe UI", "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
-  --read: "Georgia", "Cambria", "Charter", "Songti SC", "PingFang SC", "Microsoft YaHei", serif;
-  --display: "Palatino Linotype", "Book Antiqua", "Iowan Old Style", Georgia, "Songti SC", "STSong", "Noto Serif SC", serif;
+  --ui: "Fredoka", "Baloo 2", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --read: "Andika", "Noto Serif SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --display: "Baloo 2", "Fredoka", "Noto Serif SC", "PingFang SC", "Microsoft YaHei", sans-serif;
   --spring: cubic-bezier(0.2, 1.35, 0.3, 1);
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -41,9 +46,10 @@ header {
 }
 header h1 {
   margin: 0; font-family: var(--display); font-weight: 700;
-  font-size: clamp(28px, 3.2vw, 46px); letter-spacing: 0.06em; line-height: 1;
+  font-size: clamp(28px, 3.2vw, 46px); letter-spacing: 0.085em; line-height: 1.02;
+  text-shadow: 0 2px 16px rgba(5, 8, 26, 0.72), 0 0 22px rgba(230, 189, 102, 0.28);
 }
-header p { margin: 6px 0 0; font-size: 14px; letter-spacing: 0.08em; color: #ffe7bf; }
+header p { margin: 6px 0 0; font-size: 13.5px; letter-spacing: 0.11em; color: #ffe7bf; }
 .head-side { text-align: right; }
 .head-actions { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
 .lang, .lamp-btn, .sound-btn, .fs-btn {
@@ -308,12 +314,13 @@ header, footer, body::before { transition: opacity 280ms ease; }
 .eyebrow { font-size: 12px; letter-spacing: 0.28em; color: #a5642f; font-weight: 600; }
 .folio h2 {
   margin: 4px 0 0; font-family: var(--display); font-weight: 700;
-  font-size: clamp(28px, 4vw, 42px); line-height: 1.15; color: #8d4f1f;
+  font-size: clamp(28px, 4vw, 42px); line-height: 1.16; letter-spacing: 0.04em;
+  color: #8d4f1f; text-shadow: 0 1px 0 rgba(255, 250, 236, 0.85);
 }
 .rule { display: flex; align-items: center; gap: 12px; margin: 16px 0 8px; }
 .rule i { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, #d4b982, transparent); }
-.folio-body { font-family: var(--read); font-size: 16.5px; line-height: 1.85; color: var(--ink); }
-.folio-body h3 { margin: 22px 0 8px; font-family: var(--display); font-size: 20px; color: #8d4f1f; font-weight: 700; }
+.folio-body { font-family: var(--read); font-size: 16.5px; line-height: 1.88; letter-spacing: 0.015em; color: var(--ink); }
+.folio-body h3 { margin: 22px 0 8px; font-family: var(--display); font-size: 20px; letter-spacing: 0.03em; color: #8d4f1f; font-weight: 700; }
 .folio-body p { margin: 0 0 8px; }
 .folio-body a { color: #8d4f1f; font-weight: 700; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }

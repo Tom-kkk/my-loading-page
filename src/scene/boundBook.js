@@ -389,25 +389,25 @@ function drawCoverFoilLayer(g, book, primary, faint) {
   g.fillStyle = primary;
   drawStar4(g, W / 2, 704, 13);
 
-  // 书名（烫金主标题）
+  // 书名（烫金主标题：保留原绘本圆体温度，微调字号与轻盈字距）
   g.fillStyle = primary;
   g.textAlign = "center";
   g.textBaseline = "middle";
-  let titleSize = 72;
-  g.font = `700 ${titleSize}px "Palatino Linotype", "Book Antiqua", Georgia, "Songti SC", serif`;
+  let titleSize = 70;
+  g.font = `700 ${titleSize}px "Baloo 2", "Fredoka", "Noto Serif SC", sans-serif`;
   while (titleSize > 38 && g.measureText(book.title).width > W * 0.74) {
     titleSize -= 4;
-    g.font = `700 ${titleSize}px "Palatino Linotype", "Book Antiqua", Georgia, "Songti SC", serif`;
+    g.font = `700 ${titleSize}px "Baloo 2", "Fredoka", "Noto Serif SC", sans-serif`;
   }
   g.fillText(book.title, W / 2, 796);
 
   // 副标题
   g.fillStyle = faint;
   let kickerSize = 24;
-  g.font = `500 ${kickerSize}px "Segoe UI", "Inter", "PingFang SC", sans-serif`;
+  g.font = `500 ${kickerSize}px "Fredoka", "Andika", "PingFang SC", sans-serif`;
   while (kickerSize > 16 && g.measureText(book.kicker).width > W * 0.74) {
     kickerSize -= 2;
-    g.font = `500 ${kickerSize}px "Segoe UI", "Inter", "PingFang SC", sans-serif`;
+    g.font = `500 ${kickerSize}px "Fredoka", "Andika", "PingFang SC", sans-serif`;
   }
   g.fillText(book.kicker, W / 2, 864);
 
@@ -512,7 +512,7 @@ export function spineTexture(book) {
 
     // 卷号罗马数字
     g.fillStyle = "#f2d488";
-    g.font = '700 32px "Palatino Linotype", "Book Antiqua", Georgia, serif';
+    g.font = '700 30px "Baloo 2", "Fredoka", serif';
     g.textAlign = "center";
     g.textBaseline = "middle";
     g.fillText(meta.roman, w / 2, 102);
@@ -522,7 +522,7 @@ export function spineTexture(book) {
     const latin = /^[\u0000-\u007F]+$/.test(book.title);
     const step = latin ? 54 : 74;
     g.fillStyle = "#fae6b2";
-    g.font = `700 ${latin ? 38 : 50}px "Palatino Linotype", "Book Antiqua", Georgia, "Songti SC", serif`;
+    g.font = `700 ${latin ? 36 : 48}px "Baloo 2", "Fredoka", "Noto Serif SC", sans-serif`;
     const top = h / 2 - ((chars.length - 1) * step) / 2;
     chars.forEach((ch, i) => g.fillText(ch, w / 2, top + i * step));
 
