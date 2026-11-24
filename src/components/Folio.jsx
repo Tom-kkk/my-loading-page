@@ -38,38 +38,46 @@ function Page({ book, copy }) {
 
   if (book.id === "about") {
     return (
-      <>
-        <img className="about-photo" src="/logo.jpg" alt="Amico" />
-        <div className="about-meta">{copy.ui.aboutMeta}</div>
-        <p>{copy.about.lead}</p>
-        <div className="divider" />
-        <h3>{copy.ui.stackHeading}</h3>
-        <p>{copy.about.stack}</p>
-        <div className="chips">
-          {copy.about.tags.map((tag) => <span key={tag}>{tag}</span>)}
+      <div className="about-spread">
+        <div className="about-side">
+          <img className="about-photo" src="/logo.jpg" alt="Amico" />
+          <div className="about-meta">{copy.ui.aboutMeta}</div>
         </div>
-      </>
+        <div className="about-main">
+          <p>{copy.about.lead}</p>
+          <div className="divider" />
+          <h3>{copy.ui.stackHeading}</h3>
+          <p>{copy.about.stack}</p>
+          <div className="chips">
+            {copy.about.tags.map((tag) => <span key={tag}>{tag}</span>)}
+          </div>
+        </div>
+      </div>
     );
   }
   if (book.id === "projects") {
-    return copy.projects.map((item, idx) => {
-      const techs = item.tech.split("·").map((s) => s.trim()).filter(Boolean);
-      return (
-        <div className="project" key={item.title}>
-          <div className="project-head">
-            <span className="project-num">{String(idx + 1).padStart(2, "0")}</span>
-            <b>{item.title}</b>
-          </div>
-          <div className="project-tags">
-            {techs.map((t) => <span key={t}>{t}</span>)}
-          </div>
-          <p>{item.body}</p>
-          <a className="project-link" href={item.href} target="_blank" rel="noopener noreferrer">
-            {item.cta} <span aria-hidden="true">↗</span>
-          </a>
-        </div>
-      );
-    });
+    return (
+      <div className="project-grid">
+        {copy.projects.map((item, idx) => {
+          const techs = item.tech.split("·").map((s) => s.trim()).filter(Boolean);
+          return (
+            <div className="project" key={item.title}>
+              <div className="project-head">
+                <span className="project-num">{String(idx + 1).padStart(2, "0")}</span>
+                <b>{item.title}</b>
+              </div>
+              <div className="project-tags">
+                {techs.map((t) => <span key={t}>{t}</span>)}
+              </div>
+              <p>{item.body}</p>
+              <a className="project-link" href={item.href} target="_blank" rel="noopener noreferrer">
+                {item.cta} <span aria-hidden="true">↗</span>
+              </a>
+            </div>
+          );
+        })}
+      </div>
+    );
   }
   if (book.id === "craft") {
     return (
@@ -85,21 +93,23 @@ function Page({ book, copy }) {
     );
   }
   return (
-    <>
-      <p>{copy.ui.contactLead}</p>
-      <div className="chips">
-        <a href={`mailto:${copy.site.email}`}>{copy.site.email}</a>
-        <button className={`chip-btn ${copied ? "copied" : ""}`} type="button" onClick={handleCopy}>
-          {copied ? `✓ ${copy.ui.copiedEmail}` : copy.ui.copyEmail}
-        </button>
-        <a href={copy.site.github} target="_blank" rel="noopener noreferrer">github.com/Tom-kkk ↗</a>
+    <div className="contact-spread">
+      <div className="contact-main">
+        <p>{copy.ui.contactLead}</p>
+        <div className="chips">
+          <a href={`mailto:${copy.site.email}`}>{copy.site.email}</a>
+          <button className={`chip-btn ${copied ? "copied" : ""}`} type="button" onClick={handleCopy}>
+            {copied ? `✓ ${copy.ui.copiedEmail}` : copy.ui.copyEmail}
+          </button>
+          <a href={copy.site.github} target="_blank" rel="noopener noreferrer">github.com/Tom-kkk ↗</a>
+        </div>
       </div>
       <div className="wechat-card">
         <img src="/wechat.jpg" alt={copy.ui.wechatAlt} />
         <small>{copy.ui.wechatCaption}</small>
         <span className="reply-hint">{copy.ui.replyHint}</span>
       </div>
-    </>
+    </div>
   );
 }
 
