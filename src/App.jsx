@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Folio from "./components/Folio.jsx";
 import ShelfCanvas from "./components/ShelfCanvas.jsx";
 import ShelfCursor from "./components/ShelfCursor.jsx";
-import { isMobileBrowser, locales, readLocale, storeLocale } from "./data/content.js";
+import { browserLocale, isMobileBrowser, locales, readLocale, storeLocale } from "./data/content.js";
 
 function detectWeChat() {
   if (typeof navigator === "undefined") return { isWeChat: false, isIOS: false };
@@ -73,15 +73,14 @@ function WeChatGate({ copy, isIOS }) {
 export default function App() {
   const [wxEnv] = useState(detectWeChat);
   if (wxEnv.isWeChat) {
-    const isZh = typeof navigator !== "undefined" && /^zh/i.test(navigator.language || "");
-    const wxLocale = isZh ? "zh" : readLocale();
-    return <WeChatGate copy={locales[wxLocale]} isIOS={wxEnv.isIOS} />;
+    return <WeChatGate copy={locales[browserLocale()]} isIOS={wxEnv.isIOS} />;
   }
   return <ShelfApp />;
 }
 
 function ShelfApp() {
   const [isMobile] = useState(isMobileBrowser);
+  const [rotateCopy] = useState(() => locales[browserLocale()].ui);
   const [locale, setLocale] = useState(readLocale);
   const [bookId, setBookId] = useState(null);
   const [lampOn, setLampOn] = useState(true);
@@ -259,7 +258,7 @@ function ShelfApp() {
         onClose={() => setBookId(null)}
       />
       {isMobile && !dismissRotate && (
-        <div id="rotate-tip" role="dialog" aria-modal="true" aria-label={copy.ui.rotateTitle}>
+        <div id="rotate-tip" role="dialog" aria-modal="true" aria-label={rotateCopy.rotateTitle}>
           <div className="rotate-card">
             <svg className="rotate-icon" width="56" height="56" viewBox="0 0 64 64" fill="none" aria-hidden="true">
               <rect x="20" y="10" width="24" height="44" rx="5" stroke="#f2d488" strokeWidth="2.5" />
@@ -268,10 +267,10 @@ function ShelfApp() {
               <path d="M48 39l3 4 4-3" stroke="#e6bd66" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <div className="eyebrow">AMICO · ARCHIVE</div>
-            <h2>{copy.ui.rotateTitle}</h2>
-            <p>{copy.ui.rotateBody}</p>
+            <h2>{rotateCopy.rotateTitle}</h2>
+            <p>{rotateCopy.rotateBody}</p>
             <button type="button" className="rotate-skip" onClick={() => setDismissRotate(true)}>
-              {copy.ui.rotateSkip}
+              {rotateCopy.rotateSkip}
             </button>
           </div>
         </div>

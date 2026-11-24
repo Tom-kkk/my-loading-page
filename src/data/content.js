@@ -223,17 +223,18 @@ export function isMobileBrowser() {
   return /Android|iPhone|iPad|iPod|Mobile|HarmonyOS|OpenHarmony/i.test(navigator.userAgent || "");
 }
 
+export function browserLocale() {
+  if (typeof navigator === "undefined") return "en";
+  const lang = navigator.language || navigator.languages?.[0] || "";
+  return /^zh/i.test(lang) ? "zh" : "en";
+}
+
 export function readLocale() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === "zh" || saved === "en") return saved;
   } catch {
-    /* 浏览器禁止读取本地存储时，按设备规则判断。 */
-  }
-  // 电脑浏览器默认英文；手机浏览器根据系统/浏览器语言自动匹配中文或英文
-  if (isMobileBrowser()) {
-    const lang = navigator.language || navigator.languages?.[0] || "";
-    return /^zh/i.test(lang) ? "zh" : "en";
+    /* 浏览器禁止读取本地存储时，默认英文。 */
   }
   return "en";
 }
