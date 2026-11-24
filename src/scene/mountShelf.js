@@ -1,17 +1,19 @@
 import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { buildBoundBook, contactShadowTexture, coverFoilMaps, coverTexture, spineTexture } from "./boundBook.js";
 import { CometSky } from "./comets.js";
 import { createLiveCat } from "./liveCat.js";
 import { NightSky } from "./nightSky.js";
-import { buildOriginalOrnament } from "./ornaments.js";
+import { dressSurface, feltOrnament, ornamentKind } from "./ornaments.js";
 import { RosePetals } from "./rosePetals.js";
 import { addShelfFurniture } from "./shelfFurniture.js";
 import { SoundKit } from "./soundKit.js";
 import { Sparkles } from "./sparkles.js";
-import { createOriginalTextures } from "./textures.js";
 
+const ASSET = "/story-assets/public";
 // 镜头要把上层摆件完整收进画面。
 
 function canvasTex(draw, w, h) {
@@ -138,34 +140,72 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
   fill.position.set(0.2, 1.25, 3.1);
   scene.add(fill);
 
+  const textureLoader = new THREE.TextureLoader();
+  const modelLoader = new GLTFLoader();
+  modelLoader.setMeshoptDecoder(MeshoptDecoder);
+  const loadMap = (url, options = {}) => new Promise((resolve) => {
+    textureLoader.load(url, (tex) => {
+      tex.colorSpace = options.color === false ? THREE.NoColorSpace : THREE.SRGBColorSpace;
+      tex.anisotropy = 8;
+      if (options.repeat) {
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(options.repeat[0], options.repeat[1]);
+      }
+      resolve(tex);
+    }, undefined, () => resolve(null));
+  });
+  const loadModel = async (file) => {
+    const url = `${ASSET}/models/toys/${file}`;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const gltf = await modelLoader.loadAsync(url);
+        return gltf.scene;
+      } catch {
+        if (attempt === 0) await new Promise((r) => setTimeout(r, 600));
+      }
+    }
+    return null;
+  };
   const toyLayout = [
-    ["lamp", -1.85, 0.56],
-    ["owl", -0.95, 0.48],
-    ["moon", -0.1, 0.44],
-    ["rocket", 0.8, 0.54],
-    ["cat", 1.55, 0.44],
-    ["rose", 2.2, 0.48],
+    ["lamp.d0317b4ebce8705c.glb", -1.85, 0.56],
+    ["owl.64076cdcda2a772a.glb", -0.95, 0.48],
+    ["moon.8bfb8215fd3bb484.glb", -0.1, 0.44],
+    ["rocket.3dcb42ac8ccfee2a.glb", 0.8, 0.52],
+    ["cat.d16becc9eadb9302.glb", 1.55, 0.44],
+    ["rose.1f7caba56f9befc9.glb", 2.2, 0.4],
   ];
 
-  // 100% 本地原创程序化 PBR 纹理（零外部资源依赖，毫秒级初始化）
-  onProgress?.(0.25);
-  const originalTex = createOriginalTextures();
+  // 不阻塞首屏：先用程序化底纹立即呈现书架，小贴图和 3D 摆件分阶段后台渐进加载
+  const wood = canvasTex((g, w, h) => {
+    const wash = g.createLinearGradient(0, 0, 0, h);
+    wash.addColorStop(0, "#f3d7aa");
+    wash.addColorStop(1, "#c4894e");
+    g.fillStyle = wash;
+    g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 110; i++) {
+      g.strokeStyle = `rgba(92, 48, 16, ${0.05 + (i % 6) * 0.02})`;
+      g.lineWidth = 1 + (i % 3);
+      const y = (i * 29) % h;
+      g.beginPath();
+      g.moveTo(0, y);
+      g.bezierCurveTo(w * 0.28, y + 22, w * 0.66, y - 16, w, y + 8);
+      g.stroke();
+    }
+  }, 512, 512);
+  wood.wrapS = wood.wrapT = THREE.RepeatWrapping;
+  wood.repeat.set(2.2, 1);
   const woodMat = new THREE.MeshPhysicalMaterial({
-    map: originalTex.woodMap,
-    bumpMap: originalTex.woodBump,
-    bumpScale: 0.012,
-    color: 0xf4d4aa,
-    roughness: 0.42,
+    map: wood,
+    normalMap: null,
+    normalScale: new THREE.Vector2(0.7, 0.7),
+    color: 0xf4d2a4,
+    roughness: 0.4,
     metalness: 0.04,
     clearcoat: 0.16,
     clearcoatRoughness: 0.4,
-    envMapIntensity: 0.5,
+    envMapIntensity: 0.48,
   });
-  const trimMat = new THREE.MeshStandardMaterial({
-    map: originalTex.woodMap,
-    color: 0xb68452,
-    roughness: 0.56,
-  });
+  const trimMat = new THREE.MeshStandardMaterial({ map: wood, color: 0xa86b38, roughness: 0.58 });
 
   const brassBracketMat = new THREE.MeshPhysicalMaterial({
     color: 0xc9a055,
@@ -304,8 +344,34 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
     });
   };
 
-  const placeToy = (model, x, height, index, kind) => {
+  // 为原版 3D 摆件做轻量专属调色与细黄铜收藏底座点缀
+  const toyAccentTints = {
+    lamp: new THREE.Color(0xfff1d8),
+    owl: new THREE.Color(0xf8ede0),
+    moon: new THREE.Color(0xfff4d6),
+    rocket: new THREE.Color(0xf6f0e8),
+    cat: new THREE.Color(0xebe6f8),
+    rose: new THREE.Color(0xffeaf0),
+  };
+  const toyRingMat = new THREE.MeshStandardMaterial({
+    color: 0xdab060,
+    metalness: 0.86,
+    roughness: 0.28,
+  });
+
+  const placeToy = (model, x, height, index, painted, kind) => {
     if (!alive || !model) return null;
+    if (painted) dressSurface(model);
+    const tint = toyAccentTints[kind];
+    if (tint) {
+      model.traverse((o) => {
+        if (!o.isMesh || !o.material) return;
+        const mats = Array.isArray(o.material) ? o.material : [o.material];
+        mats.forEach((m) => {
+          if (m.color) m.color.multiply(tint);
+        });
+      });
+    }
     const object = stand(model, height);
     const foot = object.position.y;
     object.position.set(x, foot + 1.64, -0.22);
@@ -324,10 +390,16 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
     object.userData.flight = null;
     object.updateMatrixWorld(true);
     const fitted = new THREE.Box3().setFromObject(object).getSize(new THREE.Vector3());
+    const ringRadius = Math.min(Math.max(Math.max(fitted.x, fitted.z) * 0.44, 0.1), 0.2);
+    const brassRing = new THREE.Mesh(new THREE.TorusGeometry(ringRadius, 0.0055, 10, 36), toyRingMat);
+    brassRing.rotation.x = Math.PI / 2;
+    brassRing.position.set(x, 1.615, -0.22);
+    brassRing.receiveShadow = true;
     const shadow = footShadow(Math.max(fitted.x, 0.18) * 0.9, Math.max(fitted.z, 0.14) * 0.8);
     shadow.position.set(x, 1.612, -0.22);
     object.userData.shadow = shadow;
-    scene.add(object, shadow);
+    object.userData.ring = brassRing;
+    scene.add(object, shadow, brassRing);
     addHitProxy(object);
     toys.push(object);
     if (kind === "cat") {
@@ -367,11 +439,7 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
     roughness: 0.2,
   });
   const readGemGeo = new THREE.OctahedronGeometry(0.036, 0);
-  const bookAssets = {
-    cloth: originalTex.clothMap,
-    edges: originalTex.edgeMap,
-    paperBump: originalTex.paperBump,
-  };
+  const bookAssets = { cloth: null, edges: null, paperNormal: null };
   const shelfBooks = books.map((meta, i) => {
     const built = buildBoundBook(meta, bookAssets);
     const { group } = built;
@@ -436,11 +504,69 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
     return group;
   });
 
-  // 直接组装 6 个原创 3D 摆件（零网络下载、零外部模型依赖）
-  toyLayout.forEach(([kind, x, height], index) => {
-    placeToy(buildOriginalOrnament(kind), x, height, index, kind);
-    onProgress?.(0.35 + ((index + 1) / toyLayout.length) * 0.65);
+  // 并行加载 4 张轻贴图与 6 个已压缩至 ~1MB 的高精度摆件，实时汇报加载进度
+  // 全部加载完毕后再进入主画面（同时设置 7 秒兜底上限，避免极端弱网无限等待）
+  const totalItems = 4 + toyLayout.length;
+  let loadedItems = 0;
+  const tickProgress = () => {
+    loadedItems += 1;
+    onProgress?.(Math.min(1, loadedItems / totalItems));
+  };
+  onProgress?.(0.06);
+
+  await MeshoptDecoder.ready;
+
+  const texturePromises = [
+    loadMap(`${ASSET}/textures/wood-planks.66ff16da40318ed3.webp`, { repeat: [3.2, 1] }).then((tex) => {
+      tickProgress();
+      if (!alive || !tex) return;
+      woodMat.map = tex;
+      woodMat.color.setHex(0xf2d2a6);
+      woodMat.needsUpdate = true;
+      trimMat.map = tex;
+      trimMat.color.setHex(0xb98a5a);
+      trimMat.needsUpdate = true;
+    }),
+    loadMap(`${ASSET}/textures/wood-planks-normal.254001ca88b9a14b.webp`, { color: false, repeat: [3.2, 1] }).then((tex) => {
+      tickProgress();
+      if (!alive || !tex) return;
+      woodMat.normalMap = tex;
+      woodMat.needsUpdate = true;
+    }),
+    loadMap(`${ASSET}/textures/cloth-neutral.bd2714a238f7ee4b.jpg`, { repeat: [3, 4] }).then((tex) => {
+      tickProgress();
+      if (!alive || !tex) return;
+      for (const b of shelfBooks) {
+        b.userData.board.map = tex;
+        b.userData.board.needsUpdate = true;
+      }
+    }),
+    loadMap(`${ASSET}/textures/paper-normal.556c3bfed32a1880.webp`, { color: false }).then((tex) => {
+      tickProgress();
+      if (!alive || !tex) return;
+      for (const b of shelfBooks) {
+        b.userData.cover.normalMap = tex;
+        b.userData.cover.needsUpdate = true;
+        b.userData.innerPage.normalMap = tex;
+        b.userData.innerPage.needsUpdate = true;
+      }
+    }),
+  ];
+
+  const modelPromises = toyLayout.map(([file, x, height], index) => {
+    const kind = ornamentKind(file);
+    return loadModel(file).then((model) => {
+      tickProgress();
+      if (!alive) return;
+      if (model) placeToy(model, x, height, index, true, kind);
+      else placeToy(feltOrnament(kind), x, height, index, false, kind);
+    });
   });
+
+  await Promise.race([
+    Promise.allSettled([...texturePromises, ...modelPromises]),
+    new Promise((resolve) => window.setTimeout(resolve, 7000)),
+  ]);
   onProgress?.(1);
   let activeBookId = null;
   const repaintCovers = () => {
@@ -1071,7 +1197,6 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
       cometSky.dispose();
       rosePetals.dispose();
       furniture.dispose();
-      originalTex.dispose();
       sparkles.dispose();
       sound.dispose();
       renderer.dispose();

@@ -343,10 +343,19 @@ function drawCoverFoilLayer(g, book, primary, faint) {
     [W - 66, H - 66],
   ];
   for (const [cx, cy] of corners) {
-    drawCrosshair(g, cx, cy, 11);
+    const sx = cx < W / 2 ? 1 : -1;
+    const sy = cy < H / 2 ? 1 : -1;
+    drawCrosshair(g, cx, cy, 10);
     g.beginPath();
-    g.arc(cx, cy, 5, 0, Math.PI * 2);
+    g.arc(cx, cy, 5.5, 0, Math.PI * 2);
     g.stroke();
+    // 精致星轨内弧角花
+    g.beginPath();
+    g.moveTo(cx + sx * 16, cy);
+    g.quadraticCurveTo(cx + sx * 16, cy + sy * 16, cx, cy + sy * 16);
+    g.stroke();
+    g.fillStyle = primary;
+    drawStar4(g, cx + sx * 22, cy + sy * 22, 6);
   }
 
   // 顶部蓝图编号眉标
@@ -384,21 +393,21 @@ function drawCoverFoilLayer(g, book, primary, faint) {
   g.fillStyle = primary;
   g.textAlign = "center";
   g.textBaseline = "middle";
-  let titleSize = 74;
-  g.font = `700 ${titleSize}px "Noto Serif SC", "Baloo 2", "LXGW WenKai", serif`;
+  let titleSize = 72;
+  g.font = `700 ${titleSize}px "Palatino Linotype", "Book Antiqua", Georgia, "Songti SC", serif`;
   while (titleSize > 38 && g.measureText(book.title).width > W * 0.74) {
     titleSize -= 4;
-    g.font = `700 ${titleSize}px "Noto Serif SC", "Baloo 2", "LXGW WenKai", serif`;
+    g.font = `700 ${titleSize}px "Palatino Linotype", "Book Antiqua", Georgia, "Songti SC", serif`;
   }
   g.fillText(book.title, W / 2, 796);
 
   // 副标题
   g.fillStyle = faint;
-  let kickerSize = 25;
-  g.font = `500 ${kickerSize}px "LXGW WenKai", "Fredoka", "Noto Serif SC", sans-serif`;
+  let kickerSize = 24;
+  g.font = `500 ${kickerSize}px "Segoe UI", "Inter", "PingFang SC", sans-serif`;
   while (kickerSize > 16 && g.measureText(book.kicker).width > W * 0.74) {
     kickerSize -= 2;
-    g.font = `500 ${kickerSize}px "LXGW WenKai", "Fredoka", "Noto Serif SC", sans-serif`;
+    g.font = `500 ${kickerSize}px "Segoe UI", "Inter", "PingFang SC", sans-serif`;
   }
   g.fillText(book.kicker, W / 2, 864);
 
@@ -503,7 +512,7 @@ export function spineTexture(book) {
 
     // 卷号罗马数字
     g.fillStyle = "#f2d488";
-    g.font = '700 32px "Noto Serif SC", Georgia, serif';
+    g.font = '700 32px "Palatino Linotype", "Book Antiqua", Georgia, serif';
     g.textAlign = "center";
     g.textBaseline = "middle";
     g.fillText(meta.roman, w / 2, 102);
@@ -513,7 +522,7 @@ export function spineTexture(book) {
     const latin = /^[\u0000-\u007F]+$/.test(book.title);
     const step = latin ? 54 : 74;
     g.fillStyle = "#fae6b2";
-    g.font = `700 ${latin ? 38 : 50}px "Noto Serif SC", "LXGW WenKai", serif`;
+    g.font = `700 ${latin ? 38 : 50}px "Palatino Linotype", "Book Antiqua", Georgia, "Songti SC", serif`;
     const top = h / 2 - ((chars.length - 1) * step) / 2;
     chars.forEach((ch, i) => g.fillText(ch, w / 2, top + i * step));
 
@@ -648,8 +657,8 @@ export function buildBoundBook(book, assets) {
   const pageH = BOARD_H - SQUARE * 2;
   const innerPageMat = new THREE.MeshStandardMaterial({
     color: 0xf6ebd6,
-    bumpMap: assets.paperBump || null,
-    bumpScale: 0.004,
+    normalMap: assets.paperNormal || null,
+    normalScale: new THREE.Vector2(0.18, 0.18),
     roughness: 0.9,
     metalness: 0,
   });
@@ -705,8 +714,8 @@ export function buildBoundBook(book, assets) {
     map: coverTexture(book),
     metalnessMap: foil.metalnessMap,
     roughnessMap: foil.roughnessMap,
-    bumpMap: assets.paperBump || null,
-    bumpScale: 0.005,
+    normalMap: assets.paperNormal || null,
+    normalScale: new THREE.Vector2(0.24, 0.24),
     roughness: 0.78,
     metalness: 0.88,
     clearcoat: 0.26,
