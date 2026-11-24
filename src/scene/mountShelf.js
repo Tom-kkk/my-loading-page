@@ -344,34 +344,9 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
     });
   };
 
-  // 为原版 3D 摆件做轻量专属调色与细黄铜收藏底座点缀
-  const toyAccentTints = {
-    lamp: new THREE.Color(0xfff1d8),
-    owl: new THREE.Color(0xf8ede0),
-    moon: new THREE.Color(0xfff4d6),
-    rocket: new THREE.Color(0xf6f0e8),
-    cat: new THREE.Color(0xebe6f8),
-    rose: new THREE.Color(0xffeaf0),
-  };
-  const toyRingMat = new THREE.MeshStandardMaterial({
-    color: 0xdab060,
-    metalness: 0.86,
-    roughness: 0.28,
-  });
-
   const placeToy = (model, x, height, index, painted, kind) => {
     if (!alive || !model) return null;
     if (painted) dressSurface(model);
-    const tint = toyAccentTints[kind];
-    if (tint) {
-      model.traverse((o) => {
-        if (!o.isMesh || !o.material) return;
-        const mats = Array.isArray(o.material) ? o.material : [o.material];
-        mats.forEach((m) => {
-          if (m.color) m.color.multiply(tint);
-        });
-      });
-    }
     const object = stand(model, height);
     const foot = object.position.y;
     object.position.set(x, foot + 1.64, -0.22);
@@ -390,16 +365,10 @@ export async function mountShelf(canvas, { onOpen, onLampToggle, onHoverChange, 
     object.userData.flight = null;
     object.updateMatrixWorld(true);
     const fitted = new THREE.Box3().setFromObject(object).getSize(new THREE.Vector3());
-    const ringRadius = Math.min(Math.max(Math.max(fitted.x, fitted.z) * 0.44, 0.1), 0.2);
-    const brassRing = new THREE.Mesh(new THREE.TorusGeometry(ringRadius, 0.0055, 10, 36), toyRingMat);
-    brassRing.rotation.x = Math.PI / 2;
-    brassRing.position.set(x, 1.615, -0.22);
-    brassRing.receiveShadow = true;
     const shadow = footShadow(Math.max(fitted.x, 0.18) * 0.9, Math.max(fitted.z, 0.14) * 0.8);
     shadow.position.set(x, 1.612, -0.22);
     object.userData.shadow = shadow;
-    object.userData.ring = brassRing;
-    scene.add(object, shadow, brassRing);
+    scene.add(object, shadow);
     addHitProxy(object);
     toys.push(object);
     if (kind === "cat") {

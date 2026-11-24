@@ -82,7 +82,7 @@ export const locales = {
       {
         title: "Amico Night Shelf",
         tech: "Agentic Coding · Three.js · GLSL Shader",
-        body: "An interactive 3D night-sky study shipped rapidly with Antigravity & Codex. 100% original procedural 3D ornaments, gold-foil hardcovers, custom GLSL star & comet shaders, and instant zero-asset-bloat loading.",
+        body: "An interactive 3D night-sky study shipped rapidly with Antigravity & Codex. Features procedural gold-foil hardcovers, custom GLSL star & comet shaders, 86% Meshopt model compression, and full mobile adaptation.",
         href: "https://github.com/Tom-kkk/my-loading-page",
         cta: "View on GitHub",
       },
@@ -184,7 +184,7 @@ export const locales = {
       {
         title: "Amico 星空书架",
         tech: "Agentic Coding · Three.js · GLSL Shader",
-        body: "借助 Antigravity 与 Codex 多轮协同极速交付的 3D 交互式个人书房。100% 原创程序化 3D 摆件与烫金精装书、GLSL 星空彗星着色器，零外部模型依赖实现全端秒开。",
+        body: "借助 Antigravity 与 Codex 多轮协同极速交付的 3D 交互式个人书房。涵盖程序化烫金精装书、GLSL 星空彗星着色器、Meshopt 模型 86% 极限压缩与全端适配。",
         href: "https://github.com/Tom-kkk/my-loading-page",
         cta: "查看 GitHub",
       },
