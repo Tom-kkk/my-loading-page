@@ -648,8 +648,8 @@ export function buildBoundBook(book, assets) {
   const pageH = BOARD_H - SQUARE * 2;
   const innerPageMat = new THREE.MeshStandardMaterial({
     color: 0xf6ebd6,
-    normalMap: assets.paperNormal || null,
-    normalScale: new THREE.Vector2(0.18, 0.18),
+    bumpMap: assets.paperBump || null,
+    bumpScale: 0.004,
     roughness: 0.9,
     metalness: 0,
   });
@@ -705,8 +705,8 @@ export function buildBoundBook(book, assets) {
     map: coverTexture(book),
     metalnessMap: foil.metalnessMap,
     roughnessMap: foil.roughnessMap,
-    normalMap: assets.paperNormal || null,
-    normalScale: new THREE.Vector2(0.24, 0.24),
+    bumpMap: assets.paperBump || null,
+    bumpScale: 0.005,
     roughness: 0.78,
     metalness: 0.88,
     clearcoat: 0.26,

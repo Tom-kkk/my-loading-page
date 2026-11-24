@@ -1,19 +1,14 @@
-@font-face { font-family: "Fredoka"; font-weight: 500; font-display: swap; src: url("/story-assets/public/fonts/fredoka-500.43219fb92dc3f7c3.woff2") format("woff2"); }
-@font-face { font-family: "Fredoka"; font-weight: 600; font-display: swap; src: url("/story-assets/public/fonts/fredoka-600.ac77fa0b85fb10eb.woff2") format("woff2"); }
-@font-face { font-family: "Baloo 2"; font-weight: 700; font-display: swap; src: url("/story-assets/public/fonts/baloo-2-800.97203f257be192fd.woff2") format("woff2"); }
-@font-face { font-family: "Andika"; font-weight: 400; font-display: swap; src: url("/story-assets/public/fonts/andika-400.dfe21cd8b12ff215.woff2") format("woff2"); }
-
 :root {
-  --midnight: #10162e;
-  --navy: #1d2649;
+  --midnight: #0c1228;
+  --navy: #192244;
   --cream: #f8f0dd;
-  --paper: #f3e8cf;
+  --paper: #f4ead4;
   --ink: #2c2a3e;
   --honey: #d9a45c;
   --gold: #e6bd66;
-  --ui: "Fredoka", "Baloo 2", "LXGW WenKai", "PingFang SC", "Microsoft YaHei", sans-serif;
-  --read: "Andika", "LXGW WenKai", "Noto Serif SC", "PingFang SC", "Microsoft YaHei", sans-serif;
-  --display: "Baloo 2", "Noto Serif SC", "LXGW WenKai", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --read: "Palatino Linotype", "Book Antiqua", Georgia, "Songti SC", "STSong", "PingFang SC", "Microsoft YaHei", serif;
+  --display: Georgia, "Palatino Linotype", "Noto Serif SC", "Songti SC", "STSong", "Microsoft YaHei", serif;
   --spring: cubic-bezier(0.2, 1.35, 0.3, 1);
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -237,9 +232,10 @@ header, footer, body::before { transition: opacity 280ms ease; }
   max-height: min(760px, 86vh);
   color: var(--ink);
   background:
-    radial-gradient(900px 280px at 50% -80px, rgba(255, 255, 255, 0.35), transparent 60%),
-    url("/story-assets/public/textures/paper.7b1612c72db0354d.webp") center / cover,
-    var(--paper);
+    radial-gradient(900px 280px at 50% -80px, rgba(255, 255, 255, 0.55), transparent 60%),
+    radial-gradient(600px 420px at 100% 100%, rgba(212, 178, 120, 0.22), transparent 65%),
+    repeating-linear-gradient(0deg, rgba(160, 124, 72, 0.025) 0 1px, transparent 1px 4px),
+    linear-gradient(165deg, #f8f1e0 0%, #f1e4c8 55%, #ebdbb7 100%);
   border-radius: 8px;
   box-shadow:
     0 0 0 1px #d4b982,
@@ -277,8 +273,8 @@ header, footer, body::before { transition: opacity 280ms ease; }
   opacity: 0.9;
 }
 .corner {
-  position: absolute; width: 84px; height: 84px; pointer-events: none; opacity: 0.95;
-  background: url("/story-assets/public/ui/corner.a562b92bf6f5ba2b.webp") center / contain no-repeat;
+  position: absolute; width: 72px; height: 72px; pointer-events: none; opacity: 0.78;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80' fill='none'%3E%3Cpath d='M8 66V18C8 12.5 12.5 8 18 8h48' stroke='%23c89a4d' stroke-width='2'/%3E%3Cpath d='M16 54V22c0-3.3 2.7-6 6-6h32' stroke='%23c89a4d' stroke-width='1.1' stroke-dasharray='3 3'/%3E%3Ccircle cx='18' cy='18' r='3.2' stroke='%23c89a4d' stroke-width='1.5'/%3E%3Cpath d='M18 11v14M11 18h14' stroke='%23c89a4d' stroke-width='1' opacity='0.75'/%3E%3Cpath d='M32 24l1.2 3.2L36.4 28.4l-3.2 1.2L32 32.8l-1.2-3.2-3.2-1.2 3.2-1.2z' fill='%23d4a656'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 .corner.tl { left: 12px; top: 12px; }
 .corner.tr { right: 12px; top: 12px; transform: scaleX(-1); }
@@ -415,18 +411,17 @@ header, footer, body::before { transition: opacity 280ms ease; }
 #loading {
   position: fixed; inset: 0; z-index: 20; display: grid; place-items: center;
   background:
-    linear-gradient(180deg, rgba(16, 22, 46, 0.2), rgba(16, 22, 46, 0.45)),
-    url("/story-assets/public/ui/sky.874540564572448d.webp") center / cover,
-    var(--midnight);
+    radial-gradient(circle at 74% 18%, rgba(44, 72, 138, 0.45), transparent 45%),
+    radial-gradient(circle at 24% 82%, rgba(56, 36, 98, 0.35), transparent 50%),
+    linear-gradient(180deg, #060a18 0%, #0d1734 55%, #161435 100%);
   transition: opacity 500ms ease;
 }
 #loading.hide { opacity: 0; pointer-events: none; }
 .loading-card {
   width: min(480px, 88vw); text-align: center; color: var(--ink);
   background:
-    radial-gradient(420px 160px at 50% 0%, rgba(255,255,255,.45), transparent 70%),
-    url("/story-assets/public/textures/paper.7b1612c72db0354d.webp") center / cover,
-    var(--paper);
+    radial-gradient(420px 160px at 50% 0%, rgba(255,255,255,.55), transparent 70%),
+    linear-gradient(165deg, #f8f1e0 0%, #f1e4c8 60%, #ead9b4 100%);
   border-radius: 8px; padding: 36px 32px 28px;
   box-shadow: 0 0 0 1px #d4b982, 0 0 0 7px var(--navy), 0 24px 60px rgba(5, 8, 26, 0.65);
 }
